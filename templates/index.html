@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Manufacturing Quality Prediction</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+ 
+    .container {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 560px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+ 
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 6px;
+    }
+ 
+    .subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 28px;
+    }
+ 
+    .form-group {
+      margin-bottom: 18px;
+    }
+ 
+    label {
+      display: block;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+ 
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+ 
+    input[type="number"]:focus {
+      border-color: #38bdf8;
+    }
+ 
+    button {
+      width: 100%;
+      padding: 13px;
+      background: #38bdf8;
+      color: #0f172a;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s, transform 0.1s;
+    }
+ 
+    button:hover { background: #0ea5e9; }
+    button:active { transform: scale(0.98); }
+    button:disabled { background: #475569; cursor: not-allowed; }
+ 
+    /* Result card */
+    #result {
+      margin-top: 24px;
+      display: none;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+ 
+    .result-header {
+      padding: 16px 20px;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+ 
+    .result-failure { background: #7f1d1d; color: #fca5a5; }
+    .result-no-failure { background: #14532d; color: #86efac; }
+ 
+    .result-body {
+      background: #0f172a;
+      padding: 16px 20px;
+    }
+ 
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid #1e293b;
+      font-size: 13px;
+    }
+ 
+    .metric-row:last-child { border-bottom: none; }
+    .metric-label { color: #94a3b8; }
+    .metric-value { color: #e2e8f0; font-weight: 600; }
+ 
+    .metrics-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 14px 0 8px;
+    }
+ 
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #0f172a;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+ 
+    @keyframes spin { to { transform: rotate(360deg); } }
+ 
+    .error-box {
+      margin-top: 16px;
+      background: #450a0a;
+      border: 1px solid #7f1d1d;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #fca5a5;
+      font-size: 13px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚙️ Manufacturing Quality Predictor</h1>
+    <p class="subtitle">Enter machine sensor parameters to predict failure risk</p>
+ 
+    <div class="form-group">
+      <label for="air_temperature">Air Temperature (K)</label>
+      <input type="number" id="air_temperature" placeholder="e.g. 298.1" step="0.1" min="250" max="400" value="298.1"/>
+    </div>
+ 
+    <div class="form-group">
+      <label for="process_temperature">Process Temperature (K)</label>
+      <input type="number" id="process_temperature" placeholder="e.g. 308.6" step="0.1" value="308.6"/>
+    </div>
+ 
+    <div class="form-group">
+      <label for="rotational_speed">Rotational Speed (rpm)</label>
+      <input type="number" id="rotational_speed" placeholder="e.g. 1551" step="1" min="1" value="1551"/>
+    </div>
+ 
+    <div class="form-group">
+      <label for="torque">Torque (Nm)</label>
+      <input type="number" id="torque" placeholder="e.g. 42.8" step="0.1" value="42.8"/>
+    </div>
+ 
+    <div class="form-group">
+      <label for="tool_wear">Tool Wear (min)</label>
+      <input type="number" id="tool_wear" placeholder="e.g. 0" step="1" min="0" value="0"/>
+    </div>
+ 
+    <button id="predictBtn" onclick="predict()">🔍 Predict Now</button>
+ 
+    <div class="error-box" id="errorBox"></div>
+ 
+    <!-- ── RESULT CARD ── -->
+    <div id="result">
+      <div class="result-header" id="resultHeader"></div>
+      <div class="result-body">
+        <div class="metrics-title">Prediction Details</div>
+        <div class="metric-row">
+          <span class="metric-label">Confidence</span>
+          <span class="metric-value" id="confidence">—</span>
+        </div>
+ 
+        <div class="metrics-title" style="margin-top:16px">Model Performance</div>
+        <div class="metric-row">
+          <span class="metric-label">Accuracy</span>
+          <span class="metric-value" id="m_accuracy">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Precision</span>
+          <span class="metric-value" id="m_precision">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Recall</span>
+          <span class="metric-value" id="m_recall">—</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">F1 Score</span>
+          <span class="metric-value" id="m_f1">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <script>
+    const API_URL = "http://127.0.0.1:5000/predict";
+ 
+    async function predict() {
+      const btn = document.getElementById('predictBtn');
+      const errorBox = document.getElementById('errorBox');
+      const resultDiv = document.getElementById('result');
+ 
+      // Reset UI
+      errorBox.style.display = 'none';
+      resultDiv.style.display = 'none';
+ 
+      // Collect inputs
+      const fields = ['air_temperature', 'process_temperature', 'rotational_speed', 'torque', 'tool_wear'];
+      const payload = {};
+ 
+      for (const field of fields) {
+        const val = document.getElementById(field).value;
+        if (val === '' || val === null) {
+          showError(`Please fill in all fields. Missing: ${field.replace(/_/g, ' ')}`);
+          return;
+        }
+        payload[field] = parseFloat(val);
+      }
+ 
+      // Show loading
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Predicting...';
+ 
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+ 
+        const data = await response.json();
+ 
+        if (!response.ok) {
+          showError(data.error || 'Prediction failed. Please try again.');
+          return;
+        }
+ 
+        // Display result
+        const isFailure = data.prediction === 'Failure';
+        const header = document.getElementById('resultHeader');
+        header.className = 'result-header ' + (isFailure ? 'result-failure' : 'result-no-failure');
+        header.innerHTML = (isFailure ? '⚠️ Machine Failure Predicted' : '✅ No Failure Predicted');
+ 
+        document.getElementById('confidence').textContent = data.confidence_percent + '%';
+ 
+        const m = data.model_metrics;
+        document.getElementById('m_accuracy').textContent  = (m.accuracy * 100).toFixed(1) + '%';
+        document.getElementById('m_precision').textContent = (m.precision * 100).toFixed(1) + '%';
+        document.getElementById('m_recall').textContent    = (m.recall * 100).toFixed(1) + '%';
+        document.getElementById('m_f1').textContent        = (m.f1_score * 100).toFixed(1) + '%';
+ 
+        resultDiv.style.display = 'block';
+ 
+      } catch (err) {
+        showError('Could not connect to the backend server. Make sure it is running on http://127.0.0.1:5000');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🔍 Predict Now';
+      }
+    }
+ 
+    function showError(msg) {
+      const errorBox = document.getElementById('errorBox');
+      errorBox.textContent = '❌ ' + msg;
+      errorBox.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
