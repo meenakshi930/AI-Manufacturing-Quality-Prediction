@@ -47,7 +47,7 @@ def generate_manufacturing_defects_data(rows: int = 1500, seed: int = 42) -> pd.
     )
 
     probability = 1 / (1 + np.exp(-risk_score))
-    defect_status = (probability > 0.58).astype(int)
+    defect_status = (probability > 0.5).astype(int)
 
     return pd.DataFrame(
         {
