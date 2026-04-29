@@ -8,7 +8,7 @@ import pandas as pd
 
 from src.defect_prevention.recommender import prevention_recommendations, risk_level
 from src.ml.config import MODEL_PATH
-from src.ml.preprocessing import payload_to_frame, validate_input_frame
+from src.ml.preprocessing import payload_to_frame
 
 
 @lru_cache(maxsize=1)
@@ -23,8 +23,10 @@ def load_model():
 def predict_one(payload: dict[str, Any]) -> dict[str, Any]:
     frame = payload_to_frame(payload)
     model = load_model()
+
     probability = float(model.predict_proba(frame)[0][1])
     prediction = int(probability >= 0.5)
+
     input_record = frame.iloc[0].to_dict()
 
     return {
@@ -36,14 +38,32 @@ def predict_one(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def predict_batch(data: pd.DataFrame) -> pd.DataFrame:
-    frame = validate_input_frame(data)
-    model = load_model()
-    probabilities = model.predict_proba(frame)[:, 1]
-    predictions = (probabilities >= 0.5).astype(int)
+def predict_batch(frame: pd.DataFrame) -> pd.DataFrame:
+    results = []
 
-    result = data.copy()
-    result["defect_prediction"] = predictions
-    result["defect_probability"] = probabilities.round(4)
-    result["risk_level"] = [risk_level(float(probability)) for probability in probabilities]
-    return result
+    for _, row in frame.iterrows():
+        record = row.to_dict()
+
+        try:
+            prediction = predict_one(record)
+
+            result_row = {
+                **record,
+                **prediction,
+                "error": None,
+            }
+
+        except Exception as e:
+            result_row = {
+                **record,
+                "defect_prediction": None,
+                "defect_label": None,
+                "defect_probability": None,
+                "risk_level": None,
+                "recommendations": None,
+                "error": str(e),
+            }
+
+        results.append(result_row)
+
+    return pd.DataFrame(results)
