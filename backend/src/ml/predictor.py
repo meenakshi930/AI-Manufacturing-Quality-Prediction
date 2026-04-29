@@ -25,14 +25,14 @@ def predict_one(payload: dict[str, Any]) -> dict[str, Any]:
     model = load_model()
     probability = float(model.predict_proba(frame)[0][1])
     prediction = int(probability >= 0.5)
-    normalized_record = frame.iloc[0].to_dict()
+    input_record = frame.iloc[0].to_dict()
 
     return {
         "defect_prediction": prediction,
         "defect_label": "Defective" if prediction else "Good",
         "defect_probability": round(probability, 4),
         "risk_level": risk_level(probability),
-        "recommendations": prevention_recommendations(normalized_record, probability),
+        "recommendations": prevention_recommendations(input_record, probability),
     }
 
 
