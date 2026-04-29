@@ -1,19 +1,12 @@
-# Python cache files
+.venv/
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-
-# Virtual environment
-venv/
+.pytest_cache/
+pytest-cache-files*/
+.mypy_cache/
+.ruff_cache/
+models/*.joblib
+data/processed/*.csv
+*.log
+dist/
 .env
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Notebook checkpoints
-.ipynb_checkpoints
-
-# VS Code settings
-.vscode/
