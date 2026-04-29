@@ -6,7 +6,7 @@ import pandas as pd
 from src.ml.config import SAMPLE_DATASET_PATH
 
 
-def generate_manufacturing_defects_data(rows: int = 1500, seed: int = 42) -> pd.DataFrame:
+def generate_manufacturing_defects_data(rows: int = 1200, seed: int = 42) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
 
     production_volume = rng.integers(100, 1001, rows)
