@@ -17,7 +17,7 @@
   <input name="humidity" type="number" step="any" placeholder="Humidity" required /><br>
   <input name="vibration_level" type="number" step="any" placeholder="Vibration Level" required /><br>
 
-  <!-- Remaining features (dummy values) -->
+  <!-- dummy values for remaining features -->
   <input name="feature5" type="number" value="10" hidden />
   <input name="feature6" type="number" value="20" hidden />
   <input name="feature7" type="number" value="30" hidden />
@@ -71,9 +71,10 @@ document.getElementById("prediction-form").addEventListener("submit", async func
     });
 
     const result = await res.json();
+    console.log(result);  // DEBUG (important)
 
     document.getElementById("result").innerText =
-      `Prediction: ${result.label} | Confidence: ${result.confidence}`;
+      `Prediction: ${result.label || result.prediction} | Confidence: ${result.confidence}`;
 
   } catch (err) {
     document.getElementById("result").innerText = "Error connecting to API";
@@ -94,9 +95,9 @@ document.getElementById("batch-form").addEventListener("submit", async function(
     });
 
     const result = await res.json();
+    console.log(result);
 
     alert("Batch prediction completed! Check console.");
-    console.log(result);
 
   } catch (err) {
     alert("Batch upload failed");
