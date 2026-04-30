@@ -6,20 +6,29 @@ from typing import Any
 import joblib
 import pandas as pd
 
-from src.defect_prevention.recommender import prevention_recommendations, risk_level
-from src.ml.config import MODEL_PATH
-from src.ml.preprocessing import payload_to_frame
+from backend.src.defect_prevention.recommender import (
+    prevention_recommendations,
+    risk_level,
+)
+from backend.src.ml.config import MODEL_PATH
+from backend.src.ml.preprocessing import payload_to_frame
 
 
+# -------------------------------
+# Load Model (cached)
+# -------------------------------
 @lru_cache(maxsize=1)
 def load_model():
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
-            "Trained model not found. Run `python src/ml/train_model.py` first."
+            "Trained model not found. Run `python -m backend.src.ml.train_model` first."
         )
     return joblib.load(MODEL_PATH)
 
 
+# -------------------------------
+# Single Prediction
+# -------------------------------
 def predict_one(payload: dict[str, Any]) -> dict[str, Any]:
     frame = payload_to_frame(payload)
     model = load_model()
@@ -38,6 +47,9 @@ def predict_one(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# -------------------------------
+# Batch Prediction
+# -------------------------------
 def predict_batch(frame: pd.DataFrame) -> pd.DataFrame:
     results = []
 
