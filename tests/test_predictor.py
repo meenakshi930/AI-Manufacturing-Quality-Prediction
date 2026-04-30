@@ -71,5 +71,10 @@ def test_predict_batch_valid(monkeypatch):
 # ❌ EMPTY DATAFRAME
 # -------------------------------
 def test_predict_batch_empty():
-    with pytest.raises(Exception):
-        predictor.predict_batch(pd.DataFrame())
+    df = pd.DataFrame()
+
+    result = predictor.predict_batch(df)
+
+    assert isinstance(result, pd.DataFrame)
+    assert result.empty
+
