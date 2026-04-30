@@ -5,7 +5,6 @@ body {
   color: #1f2937;
 }
 
-/* Container */
 .container {
   max-width: 1100px;
   margin: 40px auto;
@@ -36,14 +35,12 @@ body {
 .header-left p {
   margin: 5px 0 0;
   font-size: 14px;
-  opacity: 0.9;
 }
 
 .status {
   background: rgba(255,255,255,0.2);
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 13px;
 }
 
 /* Layout */
@@ -92,13 +89,11 @@ button:hover {
   border-radius: 10px;
 }
 
-/* Risk badge */
 #risk-badge {
   display: inline-block;
   margin-top: 8px;
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 13px;
   color: white;
 }
 
@@ -118,20 +113,14 @@ button:hover {
   height: 100%;
   width: 0%;
   background: #2563eb;
-  border-radius: 10px;
 }
 
-/* Insight */
-#insight-box {
-  margin-top: 12px;
-  font-size: 14px;
-}
-
-/* Graphs */
+/* Charts */
 canvas {
+  width: 100% !important;
+  height: 300px !important;
   margin-top: 20px;
   background: white;
   padding: 10px;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
