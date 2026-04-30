@@ -1,20 +1,24 @@
 """
-Flask application entry-point.
-Run from the repo root:
-    python -m backend.main
-Or from inside backend/:
-    python main.py
+Flask application — routes and endpoints.
+Location: backend/src/api/main.py
+
+Run from repo root:
+    python -m backend.src.api.main
 """
 
-import os
+import json
 import logging
-from flask import Flask, request, jsonify
+import os
+from pathlib import Path
+
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-# ── Consistent absolute imports (always relative to backend/) ─────────────────
-from src.utils.validation import validate_input          # was mixed style
-from src.ml.predictor      import predict_one            # fixed to match predictor.py
-from src.ml.train_model    import train_and_save
+# ── All imports use the same absolute style: backend.src.* ───────────────────
+from backend.src.utils.validation        import validate_input
+from backend.src.ml.predictor            import predict_one
+from backend.src.ml.train_model          import train_and_save
+from backend.src.defect_prevention.recommender import get_recommendations
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,19 +27,22 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)   # tighten origins in production via CORS(app, origins=[...])
+
+# Tighten origins in production: CORS(app, origins=os.environ["CORS_ORIGINS"].split(","))
+_cors_origins = os.environ.get("CORS_ORIGINS", "*")
+CORS(app, origins=_cors_origins)
+
+# ── Ensure the model is ready before accepting traffic ────────────────────────
+train_and_save()   # no-op if quality_model.joblib already exists
 
 
-# ── Ensure model exists before accepting traffic ──────────────────────────────
-train_and_save()          # no-op if model file already present
-
-
-# ── Routes ────────────────────────────────────────────────────────────────────
+# ── Health ────────────────────────────────────────────────────────────────────
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"}), 200
 
 
+# ── Prediction ────────────────────────────────────────────────────────────────
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json(silent=True)
@@ -51,16 +58,31 @@ def predict():
         return jsonify(result), 200
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 422
-    except Exception as exc:          # pragma: no cover
-        logger.exception("Prediction error")
+    except Exception:
+        logger.exception("Unexpected error during prediction")
         return jsonify({"error": "Internal server error."}), 500
 
 
+# ── Recommendations ───────────────────────────────────────────────────────────
+@app.route("/recommendations", methods=["POST"])
+def recommendations():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON."}), 400
+
+    try:
+        recs = get_recommendations(data)
+        return jsonify({"recommendations": recs}), 200
+    except Exception:
+        logger.exception("Error generating recommendations")
+        return jsonify({"error": "Internal server error."}), 500
+
+
+# ── Metrics ───────────────────────────────────────────────────────────────────
 @app.route("/metrics", methods=["GET"])
 def metrics():
-    import json
-    from pathlib import Path
-    metrics_path = Path(__file__).resolve().parent / "models" / "metrics.json"
+    # backend/models/metrics.json
+    metrics_path = Path(__file__).resolve().parents[2] / "models" / "metrics.json"
     if not metrics_path.exists():
         return jsonify({"error": "Metrics not available yet."}), 404
     return jsonify(json.loads(metrics_path.read_text())), 200
