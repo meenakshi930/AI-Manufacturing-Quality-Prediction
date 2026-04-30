@@ -4,7 +4,7 @@ from typing import Any
 
 import pandas as pd
 
-from src.ml.config import FEATURE_COLUMNS, NUMERIC_FEATURES
+from backend.src.ml.config import FEATURE_COLUMNS, NUMERIC_FEATURES
 
 
 def validate_input_frame(data: pd.DataFrame) -> pd.DataFrame:

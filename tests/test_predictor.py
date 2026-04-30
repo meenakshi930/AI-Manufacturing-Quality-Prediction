@@ -2,7 +2,7 @@
 import pandas as pd
 import pytest
 
-from src.ml import predictor
+from backend.src.ml import predictor
 
 
 # 🔹 Sample valid input

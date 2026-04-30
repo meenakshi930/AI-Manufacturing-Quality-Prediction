@@ -1,4 +1,4 @@
-from src.defect_prevention.recommender import prevention_recommendations, risk_level
+from backend.src.defect_prevention.recommender import prevention_recommendations, risk_level
 
 
 def test_risk_level_thresholds():

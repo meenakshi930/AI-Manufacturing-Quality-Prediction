@@ -4,7 +4,7 @@ import os
 # 🔥 ensure backend path works in CI
 sys.path.append(os.path.abspath("backend"))
 
-from src.api.main import app
+from backend.src.api.main import app
 
 
 def test_health_endpoint():
