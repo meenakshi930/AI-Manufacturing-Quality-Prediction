@@ -17,7 +17,7 @@ document.getElementById("prediction-form").addEventListener("submit", async func
 
     const result = await res.json();
 
-    const prediction = result.label;
+    const prediction = result.label || (result.prediction === 1 ? "Defect" : "Pass");
     const confidence = result.confidence;
 
     // 🎯 Risk logic
