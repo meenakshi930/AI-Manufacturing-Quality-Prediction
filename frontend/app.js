@@ -1,44 +1,45 @@
 /**
- * app.js — Frontend API client
+ * frontend/app.js
  *
- * BASE_URL is read from the environment at build time (Vite / CRA style)
- * or falls back to localhost for local development.
+ * BASE_URL is resolved at runtime from the environment.
+ * Set it in your .env file — never hardcode a deployed URL here.
  *
- * Set in your .env file:
- *   VITE_API_BASE_URL=https://your-production-api.example.com
- * or for Create React App:
- *   REACT_APP_API_BASE_URL=https://your-production-api.example.com
+ * Vite:              VITE_API_BASE_URL=https://your-api.example.com
+ * Create React App:  REACT_APP_API_BASE_URL=https://your-api.example.com
+ * Plain HTML/JS:     set window.API_BASE_URL before this script loads
  */
 
 const BASE_URL =
+  (typeof window !== "undefined" && window.API_BASE_URL) ||
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
-  process.env.REACT_APP_API_BASE_URL ||
-  "http://127.0.0.1:5000";  // local dev fallback only
+  (typeof process !== "undefined" && process.env?.REACT_APP_API_BASE_URL) ||
+  "http://127.0.0.1:5000";   // local dev fallback only
 
+
+// ── API helpers ───────────────────────────────────────────────────────────────
 
 /**
- * Send sensor readings to the prediction endpoint.
+ * POST /predict
  * @param {{ temperature: number, pressure: number, humidity: number, vibration_level: number }} features
  * @returns {Promise<{ prediction: number, confidence: number, label: string }>}
  */
 export async function getPrediction(features) {
   const response = await fetch(`${BASE_URL}/predict`, {
-    method: "POST",
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(features),
+    body:    JSON.stringify(features),
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || `API error: ${response.status}`);
+    throw new Error(err.error || `API error ${response.status}`);
   }
 
   return response.json();
 }
 
-
 /**
- * Fetch the model's evaluation metrics from the backend.
+ * GET /metrics
  * @returns {Promise<{ accuracy: number, f1: number, precision: number, recall: number }>}
  */
 export async function getMetrics() {
@@ -51,9 +52,28 @@ export async function getMetrics() {
   return response.json();
 }
 
+/**
+ * GET /recommendations  (POST with features)
+ * @param {object} features
+ * @returns {Promise<{ recommendations: string[] }>}
+ */
+export async function getRecommendations(features) {
+  const response = await fetch(`${BASE_URL}/recommendations`, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify(features),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || `API error ${response.status}`);
+  }
+
+  return response.json();
+}
 
 /**
- * Health-check the API.
+ * GET /health
  * @returns {Promise<boolean>}
  */
 export async function healthCheck() {
