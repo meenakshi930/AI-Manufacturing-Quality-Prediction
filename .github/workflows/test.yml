@@ -22,8 +22,10 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=backend" >> $GITHUB_ENV
+      - name: Add backend to PYTHONPATH
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
 
       - name: Run tests
-        run: pytest tests
+        run: |
+          pytest tests
