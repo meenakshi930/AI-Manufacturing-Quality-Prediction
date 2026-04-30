@@ -1,110 +1,55 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Manufacturing Quality Prediction</title>
+  <meta charset="utf-8">
+  <title>AI Manufacturing Quality</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-<h2>Manufacturing Defect Prediction</h2>
+<div class="container">
+  <h1>Manufacturing Quality Prediction</h1>
 
-<form id="prediction-form">
+  <form id="prediction-form">
+    <input name="temperature" type="number" step="any" placeholder="Temperature" required>
+    <input name="pressure" type="number" step="any" placeholder="Pressure" required>
+    <input name="humidity" type="number" step="any" placeholder="Humidity" required>
+    <input name="vibration_level" type="number" step="any" placeholder="Vibration Level" required>
 
-  <input name="temperature" type="number" step="any" placeholder="Temperature" required /><br>
-  <input name="pressure" type="number" step="any" placeholder="Pressure" required /><br>
-  <input name="humidity" type="number" step="any" placeholder="Humidity" required /><br>
-  <input name="vibration_level" type="number" step="any" placeholder="Vibration Level" required /><br>
+    <!-- hidden features -->
+    <input name="feature5" value="10" hidden>
+    <input name="feature6" value="20" hidden>
+    <input name="feature7" value="30" hidden>
+    <input name="feature8" value="40" hidden>
+    <input name="feature9" value="50" hidden>
+    <input name="feature10" value="60" hidden>
+    <input name="feature11" value="70" hidden>
+    <input name="feature12" value="80" hidden>
+    <input name="feature13" value="90" hidden>
+    <input name="feature14" value="100" hidden>
+    <input name="feature15" value="110" hidden>
+    <input name="feature16" value="120" hidden>
 
-  <!-- dummy values for remaining features -->
-  <input name="feature5" type="number" value="10" hidden />
-  <input name="feature6" type="number" value="20" hidden />
-  <input name="feature7" type="number" value="30" hidden />
-  <input name="feature8" type="number" value="40" hidden />
-  <input name="feature9" type="number" value="50" hidden />
-  <input name="feature10" type="number" value="60" hidden />
-  <input name="feature11" type="number" value="70" hidden />
-  <input name="feature12" type="number" value="80" hidden />
-  <input name="feature13" type="number" value="90" hidden />
-  <input name="feature14" type="number" value="100" hidden />
-  <input name="feature15" type="number" value="110" hidden />
-  <input name="feature16" type="number" value="120" hidden />
+    <button type="submit">Predict</button>
+  </form>
 
-  <button type="submit">Predict</button>
-</form>
+  <div id="result">Result will appear here</div>
 
-<h3 id="result">Result will appear here</h3>
+  <div class="batch">
+    <h3>Batch Prediction</h3>
+    <form id="batch-form">
+      <input type="file" name="file" accept=".csv" required>
+      <button type="submit">Upload CSV</button>
+    </form>
+  </div>
 
-<hr>
+</div>
 
-<h3>Batch Prediction (CSV)</h3>
-
-<form id="batch-form">
-  <input type="file" name="file" accept=".csv" required />
-  <button type="submit">Upload CSV</button>
-</form>
-
-<script>
-const API_BASE = "http://127.0.0.1:5000";
-
-// 🔹 Single Prediction
-document.getElementById("prediction-form").addEventListener("submit", async function(e) {
-  e.preventDefault();
-
-  const formData = new FormData(this);
-  const data = {};
-
-  formData.forEach((value, key) => {
-    data[key] = Number(value);
-  });
-
-  document.getElementById("result").innerText = "Processing...";
-
-  try {
-    const res = await fetch(API_BASE + "/predict", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    });
-
-    const result = await res.json();
-    console.log(result);  // DEBUG (important)
-
-    document.getElementById("result").innerText =
-      `Prediction: ${result.label || result.prediction} | Confidence: ${result.confidence}`;
-
-  } catch (err) {
-    document.getElementById("result").innerText = "Error connecting to API";
-    console.error(err);
-  }
-});
-
-// 🔹 Batch Prediction
-document.getElementById("batch-form").addEventListener("submit", async function(e) {
-  e.preventDefault();
-
-  const formData = new FormData(this);
-
-  try {
-    const res = await fetch(API_BASE + "/predict-batch", {
-      method: "POST",
-      body: formData
-    });
-
-    const result = await res.json();
-    console.log(result);
-
-    alert("Batch prediction completed! Check console.");
-
-  } catch (err) {
-    alert("Batch upload failed");
-    console.error(err);
-  }
-});
-</script>
+<!-- JS -->
+<script src="app.js"></script>
 
 </body>
 </html>
