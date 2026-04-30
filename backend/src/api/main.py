@@ -15,10 +15,11 @@ from src.ml.predictor import predict_one, predict_batch
 from src.utils.validation import validate_payload, ValidationError
 
 
-# 📁 Paths
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-FRONTEND_DIR = PROJECT_ROOT / "frontend"
-DATA_DIR = PROJECT_ROOT / "data" / "raw"
+# 📁 Docker-safe base path
+BASE_DIR = Path("/app")
+
+FRONTEND_DIR = BASE_DIR / "frontend"
+DATA_DIR = BASE_DIR / "data" / "raw"
 
 
 def create_app() -> Flask:
@@ -63,15 +64,12 @@ def create_app() -> Flask:
     def predict():
         payload = request.get_json(silent=True)
 
-        # 🔥 FIX 1: handle empty JSON
+        # 🔥 handle empty JSON
         if not payload:
             return jsonify({"detail": "Empty request body"}), 400
 
         try:
-            # 🔥 validation
             clean_data = validate_payload(payload)
-
-            # 🔥 prediction
             result = predict_one(clean_data)
 
             return jsonify(result), 200
@@ -99,7 +97,6 @@ def create_app() -> Flask:
             return jsonify({"detail": "Please upload a valid CSV file"}), 400
 
         try:
-            # 🔥 FIX 2: safer CSV reading
             df = pd.read_csv(file, encoding="utf-8", errors="replace")
 
             result_df = predict_batch(df)
@@ -136,7 +133,7 @@ app = create_app()
 # -------------------------------
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0",   # ✅ required for Docker
+        host="0.0.0.0",
         port=int(os.environ.get("PORT", 5000)),
         debug=True
     )
