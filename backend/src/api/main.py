@@ -30,6 +30,11 @@ from backend.src.ml.predictor import predict_one, predict_batch
 from backend.src.utils.validation import validate_payload, ValidationError
 from backend.src.defect_prevention.recommender import prevention_recommendations
 
+@app.route("/")
+def home():
+    return {
+        "message": "AI Manufacturing Quality Prediction API is running 🚀"
+    }
 
 # ── Health ───────────────────────────────────
 @app.route("/health", methods=["GET"])
