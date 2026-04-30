@@ -26,17 +26,17 @@
   <!-- MAIN -->
   <div class="main">
 
-    <!-- INPUT PANEL -->
+    <!-- INPUT -->
     <div class="left-panel">
       <h3>Input Parameters</h3>
 
       <form id="prediction-form">
-        <input name="temperature" type="number" value="55" required placeholder="Temperature">
-        <input name="pressure" type="number" value="210" required placeholder="Pressure">
-        <input name="humidity" type="number" value="0.6" required placeholder="Humidity">
-        <input name="vibration_level" type="number" value="105" required placeholder="Vibration Level">
+        <input name="temperature" type="number" value="55" required>
+        <input name="pressure" type="number" value="210" required>
+        <input name="humidity" type="number" value="0.6" required>
+        <input name="vibration_level" type="number" value="105" required>
 
-        <!-- Hidden features -->
+        <!-- hidden -->
         <input name="feature5" value="10" hidden>
         <input name="feature6" value="20" hidden>
         <input name="feature7" value="30" hidden>
@@ -56,7 +56,7 @@
       <p id="loader" style="display:none;">⏳ Predicting...</p>
     </div>
 
-    <!-- RESULT PANEL -->
+    <!-- RESULT -->
     <div class="right-panel">
       <h3>Prediction Result</h3>
 
