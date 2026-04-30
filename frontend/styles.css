@@ -1,77 +1,56 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: linear-gradient(135deg, #667eea, #764ba2);
   margin: 0;
-  padding: 0;
-  color: #333;
 }
 
 .container {
-  width: 420px;
-  margin: 80px auto;
-  background: #fff;
-  padding: 30px;
-  border-radius: 15px;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  width: 900px;
+  margin: 30px auto;
+  padding: 20px;
 }
 
-h1 {
-  margin-bottom: 5px;
+.main {
+  display: flex;
+  gap: 20px;
 }
 
-.subtitle {
-  font-size: 14px;
-  color: #777;
-  margin-bottom: 20px;
+.left-panel, .right-panel {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
 }
 
 input {
   width: 90%;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  padding: 8px;
+  margin: 6px;
 }
 
 button {
-  margin-top: 15px;
-  padding: 10px 20px;
+  padding: 8px 15px;
   background: #667eea;
   color: white;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
+  border-radius: 6px;
 }
 
-button:hover {
-  background: #5a67d8;
-}
-
-/* RESULT */
-#result-box {
-  margin-top: 20px;
+.result-card {
+  background: #f5f7ff;
+  padding: 15px;
+  border-radius: 10px;
 }
 
 #risk-badge {
-  margin: 10px auto;
-  padding: 8px 15px;
+  padding: 5px 10px;
   border-radius: 20px;
-  width: fit-content;
   color: white;
-  font-weight: bold;
 }
 
-.low { background: #28a745; }
-.medium { background: #ffc107; color: black; }
-.high { background: #dc3545; }
-
 .progress {
-  width: 100%;
-  height: 15px;
+  height: 10px;
   background: #eee;
-  border-radius: 10px;
-  overflow: hidden;
   margin-top: 10px;
 }
 
@@ -79,15 +58,12 @@ button:hover {
   height: 100%;
   width: 0%;
   background: #667eea;
-  transition: 0.5s;
 }
 
-#recommendations {
-  margin-top: 15px;
-  font-size: 14px;
-  color: #444;
-}
+.low { background: green; }
+.medium { background: orange; }
+.high { background: red; }
 
-.batch {
-  margin-top: 30px;
+canvas {
+  margin-top: 20px;
 }
