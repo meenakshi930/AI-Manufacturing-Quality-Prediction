@@ -2,97 +2,206 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Manufacturing Quality Dashboard</title>
-
+  <title>MQP — Manufacturing Quality Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
+
+<div class="noise"></div>
+<div class="grid-bg"></div>
 
 <div class="container">
 
   <!-- HEADER -->
-  <div class="header">
-    <div>
-      <h1>🏭 Manufacturing Quality Dashboard</h1>
-      <p>AI-powered defect prediction & monitoring system</p>
+  <header>
+    <div class="header-left">
+      <div class="logo-mark">MQP</div>
+      <div class="header-text">
+        <h1>Manufacturing Quality Predictor</h1>
+        <p>Real-time defect detection · ML-powered · v2.0</p>
+      </div>
     </div>
-
     <div class="header-right">
-      <span class="status">🟢 System Active</span>
-      <button onclick="toggleDark()">🌙</button>
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span>API ONLINE</span>
+      </div>
+      <button class="icon-btn" onclick="toggleDark()" title="Toggle theme">◐</button>
+    </div>
+  </header>
+
+  <!-- METRIC BAR -->
+  <div class="metric-bar">
+    <div class="metric">
+      <span class="metric-val" id="total-runs">0</span>
+      <span class="metric-lbl">Total Runs</span>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric">
+      <span class="metric-val" id="defect-count">0</span>
+      <span class="metric-lbl">Defects Found</span>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric">
+      <span class="metric-val" id="avg-confidence">—</span>
+      <span class="metric-lbl">Avg Confidence</span>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric">
+      <span class="metric-val" id="last-result">—</span>
+      <span class="metric-lbl">Last Result</span>
     </div>
   </div>
 
-  <!-- SYSTEM STATUS -->
-  <div class="status-card">
-    <h4>System Overview</h4>
-    <p>Last Prediction: <span id="last-status">--</span></p>
-  </div>
+  <!-- MAIN GRID -->
+  <div class="main-grid">
 
-  <!-- MAIN -->
-  <div class="main">
-
-    <!-- INPUT -->
-    <div class="left-panel">
-      <h3>Input Parameters</h3>
+    <!-- INPUT PANEL -->
+    <div class="panel input-panel">
+      <div class="panel-header">
+        <span class="panel-tag">01</span>
+        <h2>Input Parameters</h2>
+      </div>
 
       <form id="prediction-form">
-        <input name="temperature" type="number" value="55" required>
-        <input name="pressure" type="number" value="210" required>
-        <input name="humidity" type="number" value="0.6" required>
-        <input name="vibration_level" type="number" value="105" required>
+        <div class="form-grid">
 
-        <!-- hidden -->
-        <input name="feature5" value="10" hidden>
-        <input name="feature6" value="20" hidden>
-        <input name="feature7" value="30" hidden>
-        <input name="feature8" value="40" hidden>
-        <input name="feature9" value="50" hidden>
-        <input name="feature10" value="60" hidden>
-        <input name="feature11" value="70" hidden>
-        <input name="feature12" value="80" hidden>
-        <input name="feature13" value="90" hidden>
-        <input name="feature14" value="100" hidden>
-        <input name="feature15" value="110" hidden>
-        <input name="feature16" value="120" hidden>
+          <div class="field-group">
+            <span class="field-label">Production Volume</span>
+            <input name="ProductionVolume" type="number" value="920" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Production Cost <em>$</em></span>
+            <input name="ProductionCost" type="number" value="18400" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Supplier Quality <em>0–100</em></span>
+            <input name="SupplierQuality" type="number" value="84" min="0" max="100" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Delivery Delay <em>days</em></span>
+            <input name="DeliveryDelay" type="number" value="4" min="0" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Defect Rate <em>%</em></span>
+            <input name="DefectRate" type="number" value="4.3" step="0.1" min="0" max="100" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Quality Score <em>0–100</em></span>
+            <input name="QualityScore" type="number" value="69" min="0" max="100" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Maintenance Hours</span>
+            <input name="MaintenanceHours" type="number" value="3" min="0" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Downtime <em>%</em></span>
+            <input name="DowntimePercentage" type="number" value="4.1" step="0.1" min="0" max="100" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Inventory Turnover</span>
+            <input name="InventoryTurnover" type="number" value="3.4" step="0.1" min="0" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Stockout Rate <em>%</em></span>
+            <input name="StockoutRate" type="number" value="8.2" step="0.1" min="0" max="100" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Worker Productivity <em>%</em></span>
+            <input name="WorkerProductivity" type="number" value="83" min="0" max="100" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Safety Incidents</span>
+            <input name="SafetyIncidents" type="number" value="5" min="0" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Energy Consumption</span>
+            <input name="EnergyConsumption" type="number" value="4300" min="0" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Energy Efficiency <em>0–1</em></span>
+            <input name="EnergyEfficiency" type="number" value="0.18" step="0.01" min="0" max="1" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Additive Process Time</span>
+            <input name="AdditiveProcessTime" type="number" value="8.1" step="0.1" min="0" required>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Additive Material Cost <em>$</em></span>
+            <input name="AdditiveMaterialCost" type="number" value="420" min="0" required>
+          </div>
 
-        <button type="submit">Predict</button>
+        </div>
+
+        <button type="submit" id="predict-btn">
+          <span id="btn-text">Run Prediction</span>
+          <span id="btn-loader" style="display:none">Analyzing<span class="dots">...</span></span>
+          <span class="btn-arrow">→</span>
+        </button>
       </form>
-
-      <p id="loader" style="display:none;">⏳ Predicting...</p>
     </div>
 
-    <!-- RESULT -->
-    <div class="right-panel">
-      <h3>Prediction Result</h3>
-
-      <div class="result-card">
-        <h2 id="prediction-text">--</h2>
-        <span id="risk-badge"></span>
+    <!-- RESULT PANEL -->
+    <div class="panel result-panel">
+      <div class="panel-header">
+        <span class="panel-tag">02</span>
+        <h2>Prediction Output</h2>
       </div>
 
-      <div class="progress">
-        <div id="confidence-bar"></div>
+      <div class="result-display">
+        <div class="result-idle" id="result-idle">
+          <div class="idle-icon">◈</div>
+          <p>Submit parameters to run analysis</p>
+        </div>
+        <div class="result-active" id="result-active" style="display:none">
+          <div class="verdict-row">
+            <span class="verdict" id="verdict-text">—</span>
+            <span class="risk-chip" id="risk-chip"></span>
+          </div>
+          <div class="conf-row">
+            <span class="conf-label">CONFIDENCE</span>
+            <span class="conf-value" id="conf-value">—</span>
+          </div>
+          <div class="conf-track">
+            <div class="conf-fill" id="conf-fill"></div>
+          </div>
+          <div class="timestamp" id="timestamp"></div>
+        </div>
       </div>
 
-      <div id="insight-box"></div>
+      <div class="insight-box" id="insight-box" style="display:none"></div>
 
-      <!-- EXPLANATION -->
-      <div id="explanation"></div>
+      <div class="recs-panel" id="recs-panel" style="display:none">
+        <div class="recs-header">
+          <span class="panel-tag sm">REC</span>
+          <span>Preventive Recommendations</span>
+        </div>
+        <ul class="recs-list" id="recs-list"></ul>
+      </div>
 
-      <p id="timestamp"></p>
     </div>
-
   </div>
 
-  <!-- GRAPHS -->
-  <h3>📊 Feature Analysis</h3>
-  <canvas id="featureChart"></canvas>
-
-  <h3>📈 Confidence Trend</h3>
-  <canvas id="historyChart"></canvas>
+  <!-- CHARTS -->
+  <div class="charts-grid">
+    <div class="panel chart-panel">
+      <div class="panel-header">
+        <span class="panel-tag">03</span>
+        <h2>Feature Analysis</h2>
+      </div>
+      <canvas id="featureChart"></canvas>
+    </div>
+    <div class="panel chart-panel">
+      <div class="panel-header">
+        <span class="panel-tag">04</span>
+        <h2>Confidence Trend</h2>
+      </div>
+      <canvas id="historyChart"></canvas>
+    </div>
+  </div>
 
 </div>
 
