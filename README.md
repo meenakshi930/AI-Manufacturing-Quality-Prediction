@@ -1,127 +1,112 @@
-# AI-Driven Manufacturing Quality Prediction & Defect Prevention Platform
+AI-Driven Manufacturing Quality Prediction & Defect Prevention Platform
 
-This project predicts manufacturing defect risk **before products leave the production line**.
-It combines a Flask backend, machine learning model, rule-based recommendations, batch processing, and a simple dashboard for plant supervisors.
-
----
-
-## 🚀 Features
-
-* Predicts whether a production record is likely defective
-* Outputs defect probability and risk level (Low / Medium / High)
-* Provides preventive recommendations based on process conditions
-* Supports:
-
-  * Single prediction (`/predict`)
-  * Batch CSV prediction (`/predict/batch`)
-* Works with Kaggle dataset schema
-* Includes fallback synthetic dataset (no Kaggle required)
-* Robust batch handling (row-level error recovery)
-* Clean frontend dashboard
+This project predicts manufacturing defect risk before products leave the production line.
+It combines a Flask backend, machine learning model, rule-based recommendations, batch processing, and a frontend dashboard for plant supervisors.
 
 ---
 
-## 🧠 Tech Stack
+🚀 Features
 
-* Python 3.10+
-* Flask
-* scikit-learn
-* pandas, numpy
-* joblib
-* HTML, CSS, JavaScript
+- Predict defect risk (Low / Medium / High)
+- Output probability score
+- Preventive recommendations based on production conditions
+- Supports:
+  - Single prediction ("/predict")
+  - Batch CSV prediction ("/predict/batch")
+- Integrated frontend dashboard (connected to API)
+- Input validation & error handling
+- Automated testing with pytest
+- CI/CD using GitHub Actions
+- Docker containerization for deployment
 
 ---
 
-## 📁 Project Structure (Simplified)
+🧠 Tech Stack
 
-```
-project-root/
+- Python 3.10
+- Flask
+- scikit-learn
+- pandas, numpy
+- joblib
+- HTML, CSS, JavaScript
+- Docker
+- GitHub Actions (CI/CD)
+
+---
+
+📁 Project Structure
+
+AI-Manufacturing-Quality-Prediction/
 │
 ├── backend/
 │   ├── src/
+│   │   ├── api/
+│   │   ├── ml/
+│   │   ├── defect_prevention/
+│   │   └── utils/
 │   ├── models/
 │   └── tests/
 │
 ├── frontend/
 ├── data/
-│   ├── raw/
-│   └── processed/   # reserved for future use
-│
 ├── scripts/
 ├── docs/
-├── README.md
-└── requirements.txt
-```
+│
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── pytest.ini
+└── README.md
 
 ---
 
-## 📊 Dataset
+⚙️ Setup & Run (Local)
 
-Recommended dataset:
-https://www.kaggle.com/datasets/rabieelkharoua/predicting-manufacturing-defects-dataset
-
-### Download via script
-
-```
-.\scripts\download_kaggle_dataset.ps1
-```
-
-### Fallback behavior
-
-If no dataset is found:
-
-* A synthetic dataset is generated in `data/raw/`
-* Schema matches Kaggle dataset
-
----
-
-## ⚙️ Setup & Run
-
-```
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-```
 
 ---
 
-## 🧪 Train Model
+🧪 Train Model
 
-```
 python -m src.ml.train_model
-```
 
 ---
 
-## ▶️ Run Backend
+▶️ Run Application
 
-```
 flask --app src.api.main run --debug
-```
 
 Open:
 
-```
-http://127.0.0.1:5000
-```
+http://localhost:5000
 
 ---
 
-## 🌐 API Endpoints
+🐳 Run with Docker (Recommended)
 
-| Method | Endpoint         | Description          |
-| ------ | ---------------- | -------------------- |
-| GET    | `/`              | Dashboard            |
-| GET    | `/health`        | Health check         |
-| GET    | `/sample-data`   | Download sample CSV  |
-| POST   | `/predict`       | Single prediction    |
-| POST   | `/predict/batch` | Batch CSV prediction |
+docker compose up --build
+
+Open:
+
+http://localhost:5000
 
 ---
 
-## 📥 Example Input
+🌐 API Endpoints
 
-```
+Method| Endpoint| Description
+GET| "/"| Dashboard UI
+GET| "/health"| Health check
+GET| "/sample-data"| Download sample CSV
+POST| "/predict"| Single prediction
+POST| "/predict/batch"| Batch CSV prediction
+
+---
+
+📥 Example Input
+
 {
   "ProductionVolume": 920,
   "ProductionCost": 18400,
@@ -140,59 +125,66 @@ http://127.0.0.1:5000
   "AdditiveProcessTime": 8.1,
   "AdditiveMaterialCost": 420
 }
-```
 
 ---
 
-## 🧪 Testing
+🧪 Testing
 
-```
 pytest
-```
 
 ---
 
-## ⚠️ Important Notes
+⚙️ CI/CD
 
-* Synthetic dataset is for **demo/testing only**
-* Use real manufacturing data for production
-* Trained model is **not stored in Git**
-* Train model before running predictions:
+- Automated testing using GitHub Actions
+- Runs tests on every push and pull request
 
-```
+---
+
+📊 Dataset
+
+Recommended dataset:
+https://www.kaggle.com/datasets/rabieelkharoua/predicting-manufacturing-defects-dataset
+
+Fallback:
+
+- Synthetic dataset generated automatically if not available
+
+---
+
+⚠️ Notes
+
+- Train model before running predictions:
+
 python -m src.ml.train_model
-```
+
+- Model file is not committed to Git
+- Synthetic data is for testing only
 
 ---
 
-## 🚀 Deployment (Render)
+🚀 Deployment
 
-* Root Directory: `backend`
-* Build Command:
+Supports deployment using:
 
-```
-pip install -r requirements.txt
-```
-
-* Start Command:
-
-```
-python -m src.ml.train_model && python -m src.api.main
-```
+- Docker
+- Render / cloud platforms
 
 ---
 
-## 📌 Future Improvements
+📌 Future Improvements
 
-* Real-time data integration (PLC / MES / SCADA)
-* Model monitoring & drift detection
-* Database integration (PostgreSQL)
-* Authentication & role-based access
-* Cloud model storage
+- Authentication & authorization
+- Rate limiting
+- Database integration
+- Model monitoring
+- Real-time factory data integration
 
 ---
 
-## 👩‍💻 Contributors
+👩‍💻 Contributors
 
-* Meenakshi Gupta — Backend, ML Model, API Development
-* Anshika Garg — Frontend, UI Design, Integration
+- Meenakshi Gupta — Backend, ML, API, Docker, CI/CD
+- Anshika Garg — Frontend, UI Design, Integration
+
+---
