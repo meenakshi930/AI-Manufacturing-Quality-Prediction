@@ -66,23 +66,24 @@ def predict():
 
 
 # ── Batch Prediction ─────────────────────────
-@app.route("/predict/batch", methods=["POST"])
+@app.route("/predict-batch", methods=["POST"])
 def predict_batch_api():
-    data = request.get_json(silent=True)
+    import pandas as pd
 
-    if not data or not isinstance(data, list):
-        return jsonify({"error": "Expected a list of records"}), 400
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
 
     try:
-        import pandas as pd
-        df = pd.DataFrame(data)
-
+        df = pd.read_csv(file)
         results = predict_batch(df)
-        return jsonify(results.to_dict(orient="records")), 200
 
-    except Exception:
+        return jsonify(results.to_dict(orient="records"))
+
+    except Exception as e:
         logger.exception("Batch prediction failed")
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 # ── Recommendations ──────────────────────────
