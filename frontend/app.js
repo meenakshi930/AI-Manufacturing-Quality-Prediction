@@ -40,11 +40,11 @@ document.getElementById("prediction-form").addEventListener("submit", async func
 
     const result = await res.json();
 
-    const prediction = result.label || (result.prediction === 1 ? "Defect" : "Pass");
+    const prediction = result.label || (result.prediction===1?"Defect":"Pass");
     const confidence = result.confidence ?? 0.5;
 
     document.getElementById("prediction-text").innerText =
-      `${prediction} (${(confidence * 100).toFixed(1)}%)`;
+      `${prediction} (${(confidence*100).toFixed(1)}%)`;
 
     let risk="Low Risk", cls="low";
 
@@ -59,11 +59,11 @@ document.getElementById("prediction-form").addEventListener("submit", async func
     badge.className = cls;
 
     document.getElementById("confidence-bar").style.width =
-      `${confidence * 100}%`;
+      `${confidence*100}%`;
 
     document.getElementById("insight-box").innerText =
       prediction==="Defect"
-      ? "⚠️ Possible machine failure. Check vibration & temperature."
+      ? "⚠️ Possible machine failure detected."
       : "✅ System operating normally.";
 
     document.getElementById("timestamp").innerText =
@@ -81,18 +81,28 @@ document.getElementById("prediction-form").addEventListener("submit", async func
 
     if(historyChart) historyChart.destroy();
 
+    // 🔥 FINAL IMPROVED TREND GRAPH
     historyChart = new Chart(document.getElementById("historyChart"), {
       type: "line",
       data: {
         labels: historyLabels,
-        datasets: [{ label: "Confidence Trend", data: historyData }]
+        datasets: [{
+          label: "Confidence Trend",
+          data: historyData,
+          borderWidth: 2,
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.2)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5,
+          pointBackgroundColor: "#2563eb"
+        }]
       }
     });
 
   } catch (err) {
     document.getElementById("prediction-text").innerText =
       "⚠️ Backend not responding";
-    console.error(err);
   }
 
   document.getElementById("loader").style.display = "none";
@@ -100,9 +110,9 @@ document.getElementById("prediction-form").addEventListener("submit", async func
 
 window.onload = () => {
   updateFeatureGraph({
-    temperature: 55,
-    pressure: 210,
-    humidity: 0.6,
-    vibration_level: 105
+    temperature:55,
+    pressure:210,
+    humidity:0.6,
+    vibration_level:105
   });
 };
