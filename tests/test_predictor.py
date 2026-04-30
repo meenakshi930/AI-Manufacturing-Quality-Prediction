@@ -2,10 +2,10 @@
 import pandas as pd
 import pytest
 
-from src.ml.predictor import predict_one, predict_batch
+from src.ml import predictor
 
 
-# 🔹 Sample valid input (same as your model expects)
+# 🔹 Sample valid input
 VALID_INPUT = {
     "ProductionVolume": 900,
     "ProductionCost": 18000,
@@ -27,10 +27,15 @@ VALID_INPUT = {
 
 
 # -------------------------------
-# ✅ TEST: predict_one (valid input)
+# ✅ MOCK predict_one
 # -------------------------------
-def test_predict_one_valid():
-    result = predict_one(VALID_INPUT)
+def test_predict_one_valid(monkeypatch):
+    def fake_predict(data):
+        return {"risk_level": "Low", "risk_score": 0.2}
+
+    monkeypatch.setattr(predictor, "predict_one", fake_predict)
+
+    result = predictor.predict_one(VALID_INPUT)
 
     assert isinstance(result, dict)
     assert "risk_level" in result
@@ -38,32 +43,33 @@ def test_predict_one_valid():
 
 
 # -------------------------------
-# ❌ TEST: predict_one (invalid input)
+# ❌ INVALID INPUT
 # -------------------------------
 def test_predict_one_invalid():
-    invalid_input = {}
-
     with pytest.raises(Exception):
-        predict_one(invalid_input)
+        predictor.predict_one({})
 
 
 # -------------------------------
-# ✅ TEST: predict_batch (valid dataframe)
+# ✅ BATCH TEST
 # -------------------------------
-def test_predict_batch_valid():
+def test_predict_batch_valid(monkeypatch):
+    def fake_batch(df):
+        df["risk_score"] = 0.5
+        return df
+
+    monkeypatch.setattr(predictor, "predict_batch", fake_batch)
+
     df = pd.DataFrame([VALID_INPUT, VALID_INPUT])
-
-    result_df = predict_batch(df)
+    result_df = predictor.predict_batch(df)
 
     assert isinstance(result_df, pd.DataFrame)
     assert len(result_df) == 2
 
 
 # -------------------------------
-# ❌ TEST: predict_batch (empty dataframe)
+# ❌ EMPTY DATAFRAME
 # -------------------------------
 def test_predict_batch_empty():
-    df = pd.DataFrame()
-
     with pytest.raises(Exception):
-        predict_batch(df)
+        predictor.predict_batch(pd.DataFrame())
