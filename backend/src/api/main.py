@@ -9,7 +9,7 @@ from flask import Flask, jsonify, render_template, request, send_from_directory,
 from flask_cors import CORS
 
 # 🔥 ML logic
-from src.ml.predictor import predict_one, predict_batch
+from backend.src.ml.predictor import predict_one, predict_batch
 
 # 🔥 validation
 from src.utils.validation import validate_payload, ValidationError
