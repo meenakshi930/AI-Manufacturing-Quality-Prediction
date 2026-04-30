@@ -77,3 +77,32 @@ def predict_one(features: Dict[str, Any]) -> Dict[str, Any]:
         "confidence": round(confidence, 4),
         "label":      "Defect" if pred == 1 else "Pass",
     }
+def predict_batch(frame: pd.DataFrame) -> pd.DataFrame:
+    results = []
+
+    for _, row in frame.iterrows():
+        record = row.to_dict()
+
+        try:
+            prediction = predict_one(record)
+
+            result_row = {
+                **record,
+                **prediction,
+                "error": None,
+            }
+
+        except Exception as e:
+            result_row = {
+                **record,
+                "defect_prediction": None,
+                "defect_label": None,
+                "defect_probability": None,
+                "risk_level": None,
+                "recommendations": None,
+                "error": str(e),
+            }
+
+        results.append(result_row)
+
+    return pd.DataFrame(results)
