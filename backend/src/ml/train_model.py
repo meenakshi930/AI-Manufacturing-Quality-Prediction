@@ -1,146 +1,105 @@
-
-from __future__ import annotations
+"""
+Train and persist the quality prediction model.
+Run directly:  python -m src.ml.train_model
+Or imported:   from src.ml.train_model import train_and_save
+"""
 
 import json
+import os
+import numpy as np
 import joblib
-import pandas as pd
-
-from sklearn.compose import ColumnTransformer
+from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, roc_auc_score
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
-from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
-from backend.src.ml.config import (
-    FEATURE_COLUMNS,
-    MODEL_DIR,
-    MODEL_PATH,
-    NUMERIC_FEATURES,
-    RAW_DATA_DIR,
-    SAMPLE_DATASET_PATH,
-    TARGET_COLUMN,
-)
-from backend.src.ml.data_generator import save_sample_dataset
-from backend.src.ml.preprocessing import validate_input_frame
+# ── Paths ────────────────────────────────────────────────────────────────────
+# Works whether you run from repo root or from backend/
+_HERE = Path(__file__).resolve().parent          # backend/src/ml/
+_MODELS_DIR = _HERE.parents[1] / "models"        # backend/models/
+_MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+MODEL_PATH   = _MODELS_DIR / "quality_model.joblib"
+METRICS_PATH = _MODELS_DIR / "metrics.json"
 
 
-# -------------------------------
-# Load Data
-# -------------------------------
-def load_training_data() -> pd.DataFrame:
-    candidates = sorted(RAW_DATA_DIR.glob("*.csv"))
-
-    for dataset_path in candidates:
-        data = pd.read_csv(dataset_path)
-        if TARGET_COLUMN in data.columns and all(col in data.columns for col in FEATURE_COLUMNS):
-            return data
-
-    if not SAMPLE_DATASET_PATH.exists():
-        save_sample_dataset()
-
-    return pd.read_csv(SAMPLE_DATASET_PATH)
+# ── Synthetic data (replace with your real data loader) ──────────────────────
+def _load_data():
+    """
+    Replace this with your real dataset loading logic.
+    Returns X (np.ndarray) and y (np.ndarray of 0/1).
+    """
+    rng = np.random.default_rng(42)
+    n = 2000
+    X = rng.normal(loc=[50, 200, 0.5, 100], scale=[5, 20, 0.05, 10], size=(n, 4))
+    # Simple rule: defect when any feature exceeds +1.5 std
+    y = (np.abs(X - X.mean(axis=0)) > 1.5 * X.std(axis=0)).any(axis=1).astype(int)
+    return X, y
 
 
-# -------------------------------
-# Build Pipeline
-# -------------------------------
-def build_pipeline() -> Pipeline:
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", StandardScaler(), NUMERIC_FEATURES),
-        ]
+# ── Training ──────────────────────────────────────────────────────────────────
+def train_and_save(force: bool = False) -> dict:
+    """
+    Train the model and save it to disk.
+
+    Args:
+        force: Re-train even if a model file already exists.
+
+    Returns:
+        dict of evaluation metrics.
+    """
+    if MODEL_PATH.exists() and not force:
+        print(f"[train_model] Model already exists at {MODEL_PATH}. "
+              "Pass force=True to retrain.")
+        with open(METRICS_PATH) as f:
+            return json.load(f)
+
+    print("[train_model] Loading data …")
+    X, y = _load_data()
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    classifier = RandomForestClassifier(
-        random_state=42,
-        class_weight="balanced"
-    )
+    pipeline = Pipeline([
+        ("scaler", StandardScaler()),
+        ("clf",    RandomForestClassifier(
+            n_estimators=200,
+            max_depth=8,
+            class_weight="balanced",
+            random_state=42,
+            n_jobs=-1,
+        )),
+    ])
 
-    return Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            ("classifier", classifier),
-        ]
-    )
+    print("[train_model] Training …")
+    pipeline.fit(X_train, y_train)
 
-
-# -------------------------------
-# Train Model
-# -------------------------------
-def train() -> dict:
-    data = load_training_data()
-
-    features = validate_input_frame(data[FEATURE_COLUMNS])
-    target = pd.to_numeric(data[TARGET_COLUMN], errors="raise").astype(int)
-
-    x_train, x_test, y_train, y_test = train_test_split(
-        features,
-        target,
-        test_size=0.2,
-        random_state=42,
-        stratify=target,
-    )
-
-    # -------------------------------
-    # Hyperparameter Tuning
-    # -------------------------------
-    pipeline = build_pipeline()
-
-    param_grid = {
-        "classifier__n_estimators": [100, 200],
-        "classifier__max_depth": [8, 10, None],
-        "classifier__min_samples_leaf": [2, 4],
-    }
-
-    grid = GridSearchCV(
-        pipeline,
-        param_grid,
-        cv=3,
-        n_jobs=-1,
-        scoring="accuracy"
-    )
-
-    grid.fit(x_train, y_train)
-    model = grid.best_estimator_
-
-    # -------------------------------
-    # Cross Validation
-    # -------------------------------
-    cv_score = cross_val_score(model, features, target, cv=5).mean()
-
-    # -------------------------------
-    # Evaluation
-    # -------------------------------
-    predictions = model.predict(x_test)
-    probabilities = model.predict_proba(x_test)[:, 1]
-
+    y_pred = pipeline.predict(X_test)
     metrics = {
-        "accuracy": round(float(accuracy_score(y_test, predictions)), 4),
-        "roc_auc": round(float(roc_auc_score(y_test, probabilities)), 4),
-        "cv_score": round(float(cv_score), 4),
-        "best_params": grid.best_params_,
-        "report": classification_report(y_test, predictions),
+        "accuracy":  round(accuracy_score(y_test, y_pred),  4),
+        "f1":        round(f1_score(y_test, y_pred),        4),
+        "precision": round(precision_score(y_test, y_pred), 4),
+        "recall":    round(recall_score(y_test, y_pred),    4),
     }
 
-    # -------------------------------
-    # Save Model
-    # -------------------------------
-    MODEL_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, MODEL_PATH)
+    joblib.dump(pipeline, MODEL_PATH)
+    with open(METRICS_PATH, "w") as f:
+        json.dump(metrics, f, indent=2)
 
-    # -------------------------------
-    # Save Metrics
-    # -------------------------------
-    metrics_path = MODEL_DIR / "metrics.json"
-    metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
-
+    print(f"[train_model] Saved model  → {MODEL_PATH}")
+    print(f"[train_model] Saved metrics→ {METRICS_PATH}")
+    print(f"[train_model] Metrics: {metrics}")
     return metrics
 
 
-# -------------------------------
-# Run Script
-# -------------------------------
+# ── CLI entry-point ───────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    result = train()
-    print(json.dumps(result, indent=2))
+    import argparse
+    parser = argparse.ArgumentParser(description="Train the quality prediction model.")
+    parser.add_argument("--force", action="store_true",
+                        help="Re-train even if model file already exists.")
+    args = parser.parse_args()
+    train_and_save(force=args.force)

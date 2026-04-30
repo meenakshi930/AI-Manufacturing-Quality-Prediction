@@ -1,80 +1,126 @@
+"""
+Tests for backend/src/ml/predictor.py
 
-import pandas as pd
+Run from repo root:
+    pytest backend/tests/test_predictor.py -v
+"""
+
+import numpy as np
 import pytest
 
 from backend.src.ml import predictor
 
-
-# 🔹 Sample valid input
+# ── Shared fixtures ───────────────────────────────────────────────────────────
 VALID_INPUT = {
-    "ProductionVolume": 900,
-    "ProductionCost": 18000,
-    "SupplierQuality": 85,
-    "DeliveryDelay": 3,
-    "DefectRate": 4,
-    "QualityScore": 70,
-    "MaintenanceHours": 2,
-    "DowntimePercentage": 3,
-    "InventoryTurnover": 3,
-    "StockoutRate": 7,
-    "WorkerProductivity": 80,
-    "SafetyIncidents": 2,
-    "EnergyConsumption": 4000,
-    "EnergyEfficiency": 0.2,
-    "AdditiveProcessTime": 8,
-    "AdditiveMaterialCost": 400
+    "temperature":      72.5,
+    "pressure":        210.0,
+    "humidity":          0.48,
+    "vibration_level":  98.3,
 }
 
 
-# -------------------------------
-# ✅ MOCK predict_one
-# -------------------------------
-def test_predict_one_valid(monkeypatch):
-    def fake_predict(data):
-        return {"risk_level": "Low", "risk_score": 0.2}
+class _PassPipeline:
+    """Stub that always predicts class 0 (Pass) with 85 % confidence."""
+    def predict(self, X):
+        return np.array([0])
 
-    monkeypatch.setattr(predictor, "predict_one", fake_predict)
-
-    result = predictor.predict_one(VALID_INPUT)
-
-    assert isinstance(result, dict)
-    assert "risk_level" in result
-    assert "risk_score" in result
+    def predict_proba(self, X):
+        return np.array([[0.85, 0.15]])
 
 
-# -------------------------------
-# ❌ INVALID INPUT
-# -------------------------------
-def test_predict_one_invalid():
-    with pytest.raises(Exception):
-        predictor.predict_one({})
+class _DefectPipeline:
+    """Stub that always predicts class 1 (Defect) with 90 % confidence."""
+    def predict(self, X):
+        return np.array([1])
+
+    def predict_proba(self, X):
+        return np.array([[0.10, 0.90]])
 
 
-# -------------------------------
-# ✅ BATCH TEST
-# -------------------------------
-def test_predict_batch_valid(monkeypatch):
-    def fake_batch(df):
-        df["risk_score"] = 0.5
-        return df
-
-    monkeypatch.setattr(predictor, "predict_batch", fake_batch)
-
-    df = pd.DataFrame([VALID_INPUT, VALID_INPUT])
-    result_df = predictor.predict_batch(df)
-
-    assert isinstance(result_df, pd.DataFrame)
-    assert len(result_df) == 2
+# ── Helper: patch the module-level cache ─────────────────────────────────────
+def _patch_pipeline(monkeypatch, pipeline):
+    """
+    Patch _get_pipeline() so no model file is loaded from disk.
+    Also reset the module-level cache so the patch takes effect.
+    """
+    import backend.src.ml.predictor as mod
+    monkeypatch.setattr(mod, "_pipeline", None)
+    monkeypatch.setattr(mod, "_get_pipeline", lambda: pipeline)
 
 
-# -------------------------------
-# ❌ EMPTY DATAFRAME
-# -------------------------------
-def test_predict_batch_empty():
-    df = pd.DataFrame()
+# ── Unit tests ────────────────────────────────────────────────────────────────
+def test_predict_one_returns_required_keys(monkeypatch):
+    _patch_pipeline(monkeypatch, _PassPipeline())
+    from backend.src.ml.predictor import predict_one
+    result = predict_one(VALID_INPUT)
+    assert {"prediction", "confidence", "label"} <= result.keys()
 
-    result = predictor.predict_batch(df)
 
-    assert isinstance(result, pd.DataFrame)
-    assert result.empty
+def test_predict_one_pass_label(monkeypatch):
+    _patch_pipeline(monkeypatch, _PassPipeline())
+    from backend.src.ml.predictor import predict_one
+    result = predict_one(VALID_INPUT)
+    assert result["prediction"] == 0
+    assert result["label"] == "Pass"
+    assert 0.0 <= result["confidence"] <= 1.0
 
+
+def test_predict_one_defect_label(monkeypatch):
+    _patch_pipeline(monkeypatch, _DefectPipeline())
+    from backend.src.ml.predictor import predict_one
+    result = predict_one(VALID_INPUT)
+    assert result["prediction"] == 1
+    assert result["label"] == "Defect"
+    assert result["confidence"] == pytest.approx(0.90, abs=1e-4)
+
+
+def test_predict_one_missing_feature_raises(monkeypatch):
+    _patch_pipeline(monkeypatch, _PassPipeline())
+    from backend.src.ml.predictor import predict_one
+    bad_input = {k: v for k, v in VALID_INPUT.items() if k != "pressure"}
+    with pytest.raises(ValueError, match="pressure"):
+        predict_one(bad_input)
+
+
+def test_predict_one_extra_keys_ignored(monkeypatch):
+    """Extra keys in the payload should not cause an error."""
+    _patch_pipeline(monkeypatch, _PassPipeline())
+    from backend.src.ml.predictor import predict_one
+    extra = {**VALID_INPUT, "unknown_field": 999}
+    result = predict_one(extra)          # should not raise
+    assert result["prediction"] in (0, 1)
+
+
+def test_predict_one_confidence_is_rounded(monkeypatch):
+    _patch_pipeline(monkeypatch, _PassPipeline())
+    from backend.src.ml.predictor import predict_one
+    result = predict_one(VALID_INPUT)
+    # confidence should have at most 4 decimal places
+    assert result["confidence"] == round(result["confidence"], 4)
+
+
+# ── Integration smoke-test ────────────────────────────────────────────────────
+def test_predict_one_integration():
+    """
+    End-to-end test using the real trained model.
+    Auto-skipped if quality_model.joblib has not been generated yet.
+    """
+    from pathlib import Path
+    model_path = (
+        Path(__file__).resolve().parents[1] / "models" / "quality_model.joblib"
+    )
+    if not model_path.exists():
+        pytest.skip(
+            "Model file absent — run `python -m backend.src.ml.train_model` first."
+        )
+
+    # Reset module cache so the real file is loaded fresh
+    import backend.src.ml.predictor as mod
+    mod._pipeline = None
+
+    from backend.src.ml.predictor import predict_one
+    result = predict_one(VALID_INPUT)
+
+    assert result["prediction"] in (0, 1)
+    assert 0.0 <= result["confidence"] <= 1.0
+    assert result["label"] in ("Pass", "Defect")

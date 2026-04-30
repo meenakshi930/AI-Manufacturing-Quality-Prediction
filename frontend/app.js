@@ -1,72 +1,86 @@
-const predictionForm = document.querySelector("#prediction-form");
-const batchForm = document.querySelector("#batch-form");
-const riskPill = document.querySelector("#risk-pill");
-const defectLabel = document.querySelector("#defect-label");
-const probability = document.querySelector("#probability");
-const recommendations = document.querySelector("#recommendations");
+/**
+ * frontend/app.js
+ *
+ * BASE_URL is resolved at runtime from the environment.
+ * Set it in your .env file — never hardcode a deployed URL here.
+ *
+ * Vite:              VITE_API_BASE_URL=https://your-api.example.com
+ * Create React App:  REACT_APP_API_BASE_URL=https://your-api.example.com
+ * Plain HTML/JS:     set window.API_BASE_URL before this script loads
+ */
 
-function formToPayload(form) {
-  const data = new FormData(form);
-  return Object.fromEntries([...data.entries()].map(([key, value]) => [key, Number(value)]));
-}
+const BASE_URL =
+  (typeof window !== "undefined" && window.API_BASE_URL) ||
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
+  (typeof process !== "undefined" && process.env?.REACT_APP_API_BASE_URL) ||
+  "http://127.0.0.1:5000";   // local dev fallback only
 
-function renderPrediction(result) {
-  riskPill.textContent = `${result.risk_level} Risk`;
-  riskPill.className = `risk-pill ${result.risk_level}`;
-  defectLabel.textContent = result.defect_label;
-  probability.textContent = `Defect probability: ${(result.defect_probability * 100).toFixed(1)}%`;
-  recommendations.innerHTML = "";
 
-  result.recommendations.forEach((item) => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    recommendations.appendChild(li);
-  });
-}
+// ── API helpers ───────────────────────────────────────────────────────────────
 
-function renderError(message) {
-  riskPill.textContent = "Error";
-  riskPill.className = "risk-pill High";
-  defectLabel.textContent = "Prediction failed";
-  probability.textContent = message;
-}
-
-predictionForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const response = await fetch("/predict", {
-    method: "POST",
+/**
+ * POST /predict
+ * @param {{ temperature: number, pressure: number, humidity: number, vibration_level: number }} features
+ * @returns {Promise<{ prediction: number, confidence: number, label: string }>}
+ */
+export async function getPrediction(features) {
+  const response = await fetch(`${BASE_URL}/predict`, {
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(formToPayload(predictionForm)),
-  });
-
-  const result = await response.json();
-  if (!response.ok) {
-    renderError(result.detail || "Unable to run prediction.");
-    return;
-  }
-
-  renderPrediction(result);
-});
-
-batchForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const response = await fetch("/predict/batch", {
-    method: "POST",
-    body: new FormData(batchForm),
+    body:    JSON.stringify(features),
   });
 
   if (!response.ok) {
-    const result = await response.json();
-    renderError(result.detail || "Batch prediction failed.");
-    return;
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || `API error ${response.status}`);
   }
 
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "quality_predictions.csv";
-  link.click();
-  URL.revokeObjectURL(url);
-});
+  return response.json();
+}
+
+/**
+ * GET /metrics
+ * @returns {Promise<{ accuracy: number, f1: number, precision: number, recall: number }>}
+ */
+export async function getMetrics() {
+  const response = await fetch(`${BASE_URL}/metrics`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to load metrics: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * GET /recommendations  (POST with features)
+ * @param {object} features
+ * @returns {Promise<{ recommendations: string[] }>}
+ */
+export async function getRecommendations(features) {
+  const response = await fetch(`${BASE_URL}/recommendations`, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify(features),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || `API error ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * GET /health
+ * @returns {Promise<boolean>}
+ */
+export async function healthCheck() {
+  try {
+    const response = await fetch(`${BASE_URL}/health`);
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
