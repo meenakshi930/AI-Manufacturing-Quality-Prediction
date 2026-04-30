@@ -1,139 +1,73 @@
-from __future__ import annotations
+"""
+Flask application entry-point.
+Run from the repo root:
+    python -m backend.main
+Or from inside backend/:
+    python main.py
+"""
 
-from io import StringIO
-from pathlib import Path
 import os
-
-import pandas as pd
-from flask import Flask, jsonify, render_template, request, send_from_directory, Response
+import logging
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# 🔥 ML logic
-from backend.src.ml.predictor import predict_one, predict_batch
+# ── Consistent absolute imports (always relative to backend/) ─────────────────
+from src.utils.validation import validate_input          # was mixed style
+from src.ml.predictor      import predict_one            # fixed to match predictor.py
+from src.ml.train_model    import train_and_save
 
-# 🔥 validation
-from src.utils.validation import validate_payload, ValidationError
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(name)s — %(message)s",
+)
+logger = logging.getLogger(__name__)
 
-
-# 📁 Docker-safe base path
-BASE_DIR = Path("/app")
-
-FRONTEND_DIR = BASE_DIR / "frontend"
-DATA_DIR = BASE_DIR / "data" / "raw"
-
-
-def create_app() -> Flask:
-    app = Flask(
-        __name__,
-        template_folder=str(FRONTEND_DIR),
-        static_folder=str(FRONTEND_DIR),
-        static_url_path="/static",
-    )
-
-    # ✅ Enable CORS
-    CORS(app)
-
-    # -------------------------------
-    # 🔹 ROUTES
-    # -------------------------------
-
-    @app.get("/")
-    def home():
-        return render_template("index.html")
-
-    @app.get("/health")
-    def health():
-        return jsonify({
-            "status": "ok",
-            "service": "manufacturing-quality-prediction"
-        }), 200
-
-    @app.get("/sample-data")
-    def sample_data():
-        file_path = DATA_DIR / "sample_input.csv"
-
-        if not file_path.exists():
-            return jsonify({"detail": "Sample data not found"}), 404
-
-        return send_from_directory(file_path.parent, file_path.name, as_attachment=True)
-
-    # -------------------------------
-    # 🔥 SINGLE PREDICTION
-    # -------------------------------
-    @app.post("/predict")
-    def predict():
-        payload = request.get_json(silent=True)
-
-        # 🔥 handle empty JSON
-        if not payload:
-            return jsonify({"detail": "Empty request body"}), 400
-
-        try:
-            clean_data = validate_payload(payload)
-            result = predict_one(clean_data)
-
-            return jsonify(result), 200
-
-        except ValidationError as e:
-            return jsonify({"detail": str(e)}), 400
-
-        except FileNotFoundError as e:
-            return jsonify({"detail": str(e)}), 503
-
-        except ValueError as e:
-            return jsonify({"detail": str(e)}), 400
-
-        except Exception as e:
-            return jsonify({"detail": f"Unexpected error: {str(e)}"}), 500
-
-    # -------------------------------
-    # 📊 BATCH PREDICTION
-    # -------------------------------
-    @app.post("/predict/batch")
-    def predict_batch_csv():
-        file = request.files.get("file")
-
-        if not file or not file.filename.lower().endswith(".csv"):
-            return jsonify({"detail": "Please upload a valid CSV file"}), 400
-
-        try:
-            df = pd.read_csv(file, encoding="utf-8", errors="replace")
-
-            result_df = predict_batch(df)
-
-            output = StringIO()
-            result_df.to_csv(output, index=False)
-
-            return Response(
-                output.getvalue(),
-                mimetype="text/csv",
-                headers={
-                    "Content-Disposition": "attachment; filename=predictions.csv"
-                }
-            )
-
-        except FileNotFoundError as e:
-            return jsonify({"detail": str(e)}), 503
-
-        except ValueError as e:
-            return jsonify({"detail": str(e)}), 400
-
-        except Exception as e:
-            return jsonify({"detail": f"Batch processing failed: {str(e)}"}), 500
-
-    return app
+app = Flask(__name__)
+CORS(app)   # tighten origins in production via CORS(app, origins=[...])
 
 
-# 🔥 Create app
-app = create_app()
+# ── Ensure model exists before accepting traffic ──────────────────────────────
+train_and_save()          # no-op if model file already present
 
 
-# -------------------------------
-# 🚀 RUN SERVER
-# -------------------------------
+# ── Routes ────────────────────────────────────────────────────────────────────
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"}), 200
+
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON."}), 400
+
+    errors = validate_input(data)
+    if errors:
+        return jsonify({"error": errors}), 422
+
+    try:
+        result = predict_one(data)
+        return jsonify(result), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 422
+    except Exception as exc:          # pragma: no cover
+        logger.exception("Prediction error")
+        return jsonify({"error": "Internal server error."}), 500
+
+
+@app.route("/metrics", methods=["GET"])
+def metrics():
+    import json
+    from pathlib import Path
+    metrics_path = Path(__file__).resolve().parent / "models" / "metrics.json"
+    if not metrics_path.exists():
+        return jsonify({"error": "Metrics not available yet."}), 404
+    return jsonify(json.loads(metrics_path.read_text())), 200
+
+
+# ── Dev server ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000)),
-        debug=True
-    )
+    port  = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(host="0.0.0.0", port=port, debug=debug)
