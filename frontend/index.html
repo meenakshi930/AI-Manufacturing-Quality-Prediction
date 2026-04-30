@@ -4,96 +4,65 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Manufacturing Quality Prediction</title>
-  <link rel="stylesheet" href="/static/styles.css" />
 </head>
 
 <body>
-<main class="app-shell">
 
-  <!-- LEFT PANEL -->
-  <section class="workspace input-panel">
-    <div>
-      <p class="eyebrow">AI Quality Control</p>
-      <h1>Manufacturing Defect Prediction</h1>
-      <p class="subtext">
-        Score production, supplier, maintenance, workforce, energy, and additive process metrics.
-      </p>
-    </div>
+<h2>Manufacturing Defect Prediction</h2>
 
-    <form id="prediction-form" class="form-grid">
+<form id="prediction-form">
 
-      <label>Production Volume<input name="ProductionVolume" type="number" value="920" required /></label>
-      <label>Production Cost<input name="ProductionCost" type="number" value="18400" required /></label>
-      <label>Supplier Quality (%)<input name="SupplierQuality" type="number" value="84.2" required /></label>
-      <label>Delivery Delay<input name="DeliveryDelay" type="number" value="4" required /></label>
-      <label>Defect Rate<input name="DefectRate" type="number" value="4.3" required /></label>
-      <label>Quality Score<input name="QualityScore" type="number" value="69.5" required /></label>
-      <label>Maintenance Hours<input name="MaintenanceHours" type="number" value="3" required /></label>
-      <label>Downtime %<input name="DowntimePercentage" type="number" value="4.1" required /></label>
-      <label>Inventory Turnover<input name="InventoryTurnover" type="number" value="3.4" required /></label>
-      <label>Stockout Rate<input name="StockoutRate" type="number" value="8.2" required /></label>
-      <label>Worker Productivity<input name="WorkerProductivity" type="number" value="83.4" required /></label>
-      <label>Safety Incidents<input name="SafetyIncidents" type="number" value="5" required /></label>
-      <label>Energy Consumption<input name="EnergyConsumption" type="number" value="4300" required /></label>
-      <label>Energy Efficiency<input name="EnergyEfficiency" type="number" value="0.18" required /></label>
-      <label>Additive Process Time<input name="AdditiveProcessTime" type="number" value="8.1" required /></label>
-      <label>Additive Material Cost<input name="AdditiveMaterialCost" type="number" value="420" required /></label>
+  <input name="temperature" type="number" placeholder="Temperature" required /><br>
+  <input name="pressure" type="number" placeholder="Pressure" required /><br>
+  <input name="humidity" type="number" placeholder="Humidity" required /><br>
+  <input name="vibration_level" type="number" placeholder="Vibration Level" required /><br>
 
-      <button type="submit">Predict Quality Risk</button>
-    </form>
-  </section>
+  <!-- Dummy values for remaining features (adjust if needed) -->
+  <input name="feature5" type="number" value="10" required hidden />
+  <input name="feature6" type="number" value="20" required hidden />
+  <input name="feature7" type="number" value="30" required hidden />
+  <input name="feature8" type="number" value="40" required hidden />
+  <input name="feature9" type="number" value="50" required hidden />
+  <input name="feature10" type="number" value="60" required hidden />
+  <input name="feature11" type="number" value="70" required hidden />
+  <input name="feature12" type="number" value="80" required hidden />
+  <input name="feature13" type="number" value="90" required hidden />
+  <input name="feature14" type="number" value="100" required hidden />
+  <input name="feature15" type="number" value="110" required hidden />
+  <input name="feature16" type="number" value="120" required hidden />
 
+  <button type="submit">Predict</button>
+</form>
 
-  <!-- RIGHT PANEL -->
-  <section class="workspace result-panel">
+<h3 id="result">Result will appear here</h3>
 
-    <div class="status-card">
-      <span id="risk-pill" class="risk-pill">Waiting</span>
-      <h2 id="defect-label">Run a prediction</h2>
-      <p id="probability">Probability will appear here.</p>
-    </div>
+<hr>
 
-    <div>
-      <h3>Preventive Actions</h3>
-      <ul id="recommendations">
-        <li>Submit values to see recommendations</li>
-      </ul>
-    </div>
+<h3>Batch Prediction (CSV)</h3>
 
-    <div class="batch-box">
-      <h3>Batch Prediction</h3>
-      <form id="batch-form">
-        <input name="file" type="file" accept=".csv" required />
-        <button type="submit">Score CSV</button>
-      </form>
-      <a class="sample-link" href="/sample-data">Download sample CSV</a>
-    </div>
+<form id="batch-form">
+  <input type="file" name="file" accept=".csv" required />
+  <button type="submit">Upload CSV</button>
+</form>
 
-  </section>
-</main>
-
-
-<!-- 🚀 MAIN SCRIPT -->
 <script>
+const API_BASE = "http://127.0.0.1:5000";
 
-const form = document.getElementById("prediction-form");
-
-form.addEventListener("submit", async function(e) {
+// 🔹 Single Prediction
+document.getElementById("prediction-form").addEventListener("submit", async function(e) {
   e.preventDefault();
 
-  const formData = new FormData(form);
+  const formData = new FormData(this);
   const data = {};
 
   formData.forEach((value, key) => {
     data[key] = Number(value);
   });
 
-  // loading state
-  document.getElementById("risk-pill").innerText = "Processing...";
-  document.getElementById("probability").innerText = "Calculating...";
+  document.getElementById("result").innerText = "Processing...";
 
   try {
-    const res = await fetch("/predict", {
+    const res = await fetch(API_BASE + "/predict", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -103,52 +72,38 @@ form.addEventListener("submit", async function(e) {
 
     const result = await res.json();
 
-    // update UI
-    document.getElementById("risk-pill").innerText = result.risk_level;
-    document.getElementById("defect-label").innerText = "Prediction Result";
-    document.getElementById("probability").innerText =
-      "Risk Score: " + result.risk_score;
-
-    // recommendations
-    const list = document.getElementById("recommendations");
-    list.innerHTML = "";
-
-    if (result.recommendations) {
-      result.recommendations.forEach(item => {
-        const li = document.createElement("li");
-        li.innerText = item;
-        list.appendChild(li);
-      });
-    }
+    document.getElementById("result").innerText =
+      `Prediction: ${result.label} | Confidence: ${result.confidence}`;
 
   } catch (err) {
-    document.getElementById("risk-pill").innerText = "Error";
-    document.getElementById("probability").innerText = "Failed to connect";
+    document.getElementById("result").innerText = "Error connecting to API";
     console.error(err);
   }
 });
 
-
-// 📊 BATCH UPLOAD
+// 🔹 Batch Prediction
 document.getElementById("batch-form").addEventListener("submit", async function(e) {
   e.preventDefault();
 
   const formData = new FormData(this);
 
-  const res = await fetch("/predict/batch", {
-    method: "POST",
-    body: formData
-  });
+  try {
+    const res = await fetch(API_BASE + "/predict-batch", {
+      method: "POST",
+      body: formData
+    });
 
-  const blob = await res.blob();
+    const result = await res.json();
 
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "predictions.csv";
-  a.click();
+    alert("Batch prediction completed! Check console.");
+
+    console.log(result);
+
+  } catch (err) {
+    alert("Batch upload failed");
+    console.error(err);
+  }
 });
-
 </script>
 
 </body>
