@@ -5,7 +5,10 @@ const defectLabel = document.querySelector("#defect-label");
 const probability = document.querySelector("#probability");
 const recommendations = document.querySelector("#recommendations");
 
-// Convert form data → JSON payload
+// 🔹 Change this if backend URL changes
+const BASE_URL = "http://127.0.0.1:5000";
+
+// Convert form data → JSON
 function formToPayload(form) {
   const data = new FormData(form);
   return Object.fromEntries(
@@ -13,30 +16,36 @@ function formToPayload(form) {
   );
 }
 
-// 🔹 Centralized API call (your second code merged properly)
-async function sendData(data) {
-  try {
-    const response = await fetch("http://127.0.0.1:5000/predict", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+// 🔹 API function (clean version of your second code)
+async function sendData(endpoint, data, isFormData = false) {
+  const options = {
+    method: "POST",
+  };
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.detail || "Prediction failed");
-    }
-
-    return result;
-  } catch (error) {
-    throw error;
+  if (isFormData) {
+    options.body = data;
+  } else {
+    options.headers = { "Content-Type": "application/json" };
+    options.body = JSON.stringify(data);
   }
+
+  const response = await fetch(`${BASE_URL}${endpoint}`, options);
+
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    result = { detail: "Invalid server response" };
+  }
+
+  if (!response.ok) {
+    throw new Error(result.detail || "Request failed");
+  }
+
+  return result;
 }
 
-// Render success result
+// Render success
 function renderPrediction(result) {
   riskPill.textContent = `${result.risk_level} Risk`;
   riskPill.className = `risk-pill ${result.risk_level}`;
@@ -60,26 +69,25 @@ function renderError(message) {
   probability.textContent = message;
 }
 
-// 🔹 Single prediction form
+// 🔹 Single prediction
 predictionForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const payload = formToPayload(predictionForm);
-
   try {
-    const result = await sendData(payload); // using merged function
+    const payload = formToPayload(predictionForm);
+    const result = await sendData("/predict", payload);
     renderPrediction(result);
   } catch (error) {
     renderError(error.message);
   }
 });
 
-// 🔹 Batch prediction (file upload)
+// 🔹 Batch prediction
 batchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   try {
-    const response = await fetch("http://127.0.0.1:5000/predict/batch", {
+    const response = await fetch(`${BASE_URL}/predict/batch`, {
       method: "POST",
       body: new FormData(batchForm),
     });
@@ -101,5 +109,4 @@ batchForm.addEventListener("submit", async (event) => {
   } catch (error) {
     renderError(error.message);
   }
-});
 });
