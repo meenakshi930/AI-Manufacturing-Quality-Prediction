@@ -14,13 +14,21 @@
 
   <!-- HEADER -->
   <div class="header">
-    <div class="header-left">
+    <div>
       <h1>🏭 Manufacturing Quality Dashboard</h1>
       <p>AI-powered defect prediction & monitoring system</p>
     </div>
+
     <div class="header-right">
       <span class="status">🟢 System Active</span>
+      <button onclick="toggleDark()">🌙</button>
     </div>
+  </div>
+
+  <!-- SYSTEM STATUS -->
+  <div class="status-card">
+    <h4>System Overview</h4>
+    <p>Last Prediction: <span id="last-status">--</span></p>
   </div>
 
   <!-- MAIN -->
@@ -70,6 +78,10 @@
       </div>
 
       <div id="insight-box"></div>
+
+      <!-- EXPLANATION -->
+      <div id="explanation"></div>
+
       <p id="timestamp"></p>
     </div>
 
