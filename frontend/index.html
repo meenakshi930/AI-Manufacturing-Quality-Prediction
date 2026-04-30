@@ -3,15 +3,14 @@
 <head>
   <meta charset="utf-8">
   <title>AI Manufacturing Quality</title>
-
-  <!-- CSS -->
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
 <div class="container">
-  <h1>Manufacturing Quality Prediction</h1>
+  <h1>AI Quality Prediction System</h1>
+  <p class="subtitle">Predict defects & prevent failures proactively</p>
 
   <form id="prediction-form">
     <input name="temperature" type="number" step="any" placeholder="Temperature" required>
@@ -19,7 +18,7 @@
     <input name="humidity" type="number" step="any" placeholder="Humidity" required>
     <input name="vibration_level" type="number" step="any" placeholder="Vibration Level" required>
 
-    <!-- hidden features -->
+    <!-- Hidden features -->
     <input name="feature5" value="10" hidden>
     <input name="feature6" value="20" hidden>
     <input name="feature7" value="30" hidden>
@@ -33,11 +32,22 @@
     <input name="feature15" value="110" hidden>
     <input name="feature16" value="120" hidden>
 
-    <button type="submit">Predict</button>
+    <button type="submit">Predict Quality</button>
   </form>
 
-  <div id="result">Result will appear here</div>
+  <!-- RESULT SECTION -->
+  <div id="result-box">
+    <h3 id="prediction-text">Result will appear here</h3>
+    <div id="risk-badge"></div>
 
+    <div class="progress">
+      <div id="confidence-bar"></div>
+    </div>
+
+    <div id="recommendations"></div>
+  </div>
+
+  <!-- BATCH -->
   <div class="batch">
     <h3>Batch Prediction</h3>
     <form id="batch-form">
@@ -45,11 +55,8 @@
       <button type="submit">Upload CSV</button>
     </form>
   </div>
-
 </div>
 
-<!-- JS -->
 <script src="app.js"></script>
-
 </body>
 </html>
