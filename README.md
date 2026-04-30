@@ -1,190 +1,86 @@
-AI-Driven Manufacturing Quality Prediction & Defect Prevention Platform
+# 🏭 AI-Driven Manufacturing Quality Prediction & Defect Prevention Platform
 
-This project predicts manufacturing defect risk before products leave the production line.
-It combines a Flask backend, machine learning model, rule-based recommendations, batch processing, and a frontend dashboard for plant supervisors.
+![Python](https://img.shields.io/badge/Python-3.10-blue?style=flat-square)
+![Flask](https://img.shields.io/badge/Flask-3.1-orange?style=flat-square)
+![scikit--learn](https://img.shields.io/badge/scikit--learn-1.6-green?style=flat-square)
+![Docker](https://img.shields.io/badge/Docker-ready-teal?style=flat-square)
+![CI](https://img.shields.io/badge/CI-GitHub_Actions-purple?style=flat-square)
+![Accuracy](https://img.shields.io/badge/Accuracy-87.08%25-success?style=flat-square)
 
----
-
-🚀 Features
-
-- Predict defect risk (Low / Medium / High)
-- Output probability score
-- Preventive recommendations based on production conditions
-- Supports:
-  - Single prediction ("/predict")
-  - Batch CSV prediction ("/predict/batch")
-- Integrated frontend dashboard (connected to API)
-- Input validation & error handling
-- Automated testing with pytest
-- CI/CD using GitHub Actions
-- Docker containerization for deployment
+> Predicts manufacturing defect risk **before products leave the production line** — combining a Flask backend, Random Forest ML model, rule-based recommendations, batch processing, and a supervisor dashboard.
 
 ---
 
-🧠 Tech Stack
+## ✨ Features
 
-- Python 3.10
-- Flask
-- scikit-learn
-- pandas, numpy
-- joblib
-- HTML, CSS, JavaScript
-- Docker
-- GitHub Actions (CI/CD)
-
----
-
-📁 Project Structure
-
-AI-Manufacturing-Quality-Prediction/
-│
-├── backend/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── ml/
-│   │   ├── defect_prevention/
-│   │   └── utils/
-│   ├── models/
-│   └── tests/
-│
-├── frontend/
-├── data/
-├── scripts/
-├── docs/
-│
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-├── pytest.ini
-└── README.md
+| Feature | Description |
+|---|---|
+| 🔍 Defect risk prediction | Low / Medium / High with probability score |
+| 💡 Preventive recommendations | Rule-based actions for risky process conditions |
+| 📂 Batch CSV prediction | Upload a file, get predictions for every row |
+| 🖥️ Supervisor dashboard | Browser UI — no ML expertise required |
+| ✅ Input validation | Descriptive HTTP 422 error responses |
+| ⚙️ CI/CD pipeline | pytest runs on every push via GitHub Actions |
 
 ---
 
-⚙️ Setup & Run (Local)
+## 🧠 Tech Stack
 
+`Python 3.10` · `Flask` · `scikit-learn` · `pandas` · `NumPy` · `joblib` · `Docker` · `GitHub Actions` · `pytest` · `HTML/CSS/JS`
+
+---
+
+## 🌐 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Dashboard UI |
+| `GET` | `/health` | Health check |
+| `GET` | `/sample-data` | Download sample CSV |
+| `POST` | `/predict` | Single-record prediction |
+| `POST` | `/predict/batch` | Batch CSV prediction |
+
+---
+
+## ⚙️ Setup & Run
+
+```bash
+# 1. Create virtual environment
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+
+# 2. Install dependencies
 pip install -r requirements.txt
 
----
-
-🧪 Train Model
-
+# 3. Train the model
 python -m src.ml.train_model
 
----
-
-▶️ Run Application
-
+# 4. Run the app
 flask --app src.api.main run --debug
+```
 
-Open:
-
-http://localhost:5000
-
----
-
-🐳 Run with Docker (Recommended)
-
+🐳 **Docker (recommended)**
+```bash
 docker compose up --build
+```
 
-Open:
-
-http://localhost:5000
-
----
-
-🌐 API Endpoints
-
-Method| Endpoint| Description
-GET| "/"| Dashboard UI
-GET| "/health"| Health check
-GET| "/sample-data"| Download sample CSV
-POST| "/predict"| Single prediction
-POST| "/predict/batch"| Batch CSV prediction
+Open **http://localhost:5000**
 
 ---
 
-📥 Example Input
-
-{
-  "ProductionVolume": 920,
-  "ProductionCost": 18400,
-  "SupplierQuality": 84.2,
-  "DeliveryDelay": 4,
-  "DefectRate": 4.3,
-  "QualityScore": 69.5,
-  "MaintenanceHours": 3,
-  "DowntimePercentage": 4.1,
-  "InventoryTurnover": 3.4,
-  "StockoutRate": 8.2,
-  "WorkerProductivity": 83.4,
-  "SafetyIncidents": 5,
-  "EnergyConsumption": 4300,
-  "EnergyEfficiency": 0.18,
-  "AdditiveProcessTime": 8.1,
-  "AdditiveMaterialCost": 420
-}
-
----
-
-🧪 Testing
-
-pytest
-
----
-
-⚙️ CI/CD
-
-- Automated testing using GitHub Actions
-- Runs tests on every push and pull request
-
----
-
-📊 Dataset
-
-Recommended dataset:
-https://www.kaggle.com/datasets/rabieelkharoua/predicting-manufacturing-defects-dataset
-
-Fallback:
-
-- Synthetic dataset generated automatically if not available
-
----
-
-⚠️ Notes
-
-- Train model before running predictions:
-
-python -m src.ml.train_model
-
-- Model file is not committed to Git
-- Synthetic data is for testing only
-
----
-
-🚀 Deployment
-
-Supports deployment using:
-
-- Docker
-- Render / cloud platforms
-
----
-
-📌 Future Improvements
+## 📌 Future Improvements
 
 - Authentication & authorization
-- Rate limiting
-- Database integration
-- Model monitoring
-- Real-time factory data integration
+- Database integration (PostgreSQL)
+- Model drift monitoring & scheduled retraining
+- Real-time PLC/SCADA factory data integration
+- Alerting for high-risk batches (Slack, email)
 
 ---
 
-👩‍💻 Contributors
+## 👩‍💻 Contributors
 
-- Meenakshi Gupta — Backend, ML, API, Docker, CI/CD
-- Anshika Garg — Frontend, UI Design, Integration
-
----
+| | Name | Responsibilities |
+|---|---|---|
+| 🔵 | **Meenakshi Gupta** | Backend, ML, API, Docker, CI/CD |
+| 🟢 | **Anshika Garg** | Frontend, UI Design, Integration |
