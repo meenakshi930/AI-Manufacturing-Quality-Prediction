@@ -1,86 +1,52 @@
-/**
- * frontend/app.js
- *
- * BASE_URL is resolved at runtime from the environment.
- * Set it in your .env file — never hardcode a deployed URL here.
- *
- * Vite:              VITE_API_BASE_URL=https://your-api.example.com
- * Create React App:  REACT_APP_API_BASE_URL=https://your-api.example.com
- * Plain HTML/JS:     set window.API_BASE_URL before this script loads
- */
+const API_BASE = "https://ai-manufacturing-quality-prediction.onrender.com";
 
-const BASE_URL =
-  (typeof window !== "undefined" && window.API_BASE_URL) ||
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
-  (typeof process !== "undefined" && process.env?.REACT_APP_API_BASE_URL) ||
-  "http://127.0.0.1:5000";   // local dev fallback only
+// 🔹 Single Prediction
+document.getElementById("prediction-form").addEventListener("submit", async function(e) {
+  e.preventDefault();
 
+  const data = {};
+  new FormData(this).forEach((v, k) => data[k] = Number(v));
 
-// ── API helpers ───────────────────────────────────────────────────────────────
+  document.getElementById("result").innerText = "Processing...";
 
-/**
- * POST /predict
- * @param {{ temperature: number, pressure: number, humidity: number, vibration_level: number }} features
- * @returns {Promise<{ prediction: number, confidence: number, label: string }>}
- */
-export async function getPrediction(features) {
-  const response = await fetch(`${BASE_URL}/predict`, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify(features),
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || `API error ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * GET /metrics
- * @returns {Promise<{ accuracy: number, f1: number, precision: number, recall: number }>}
- */
-export async function getMetrics() {
-  const response = await fetch(`${BASE_URL}/metrics`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to load metrics: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * GET /recommendations  (POST with features)
- * @param {object} features
- * @returns {Promise<{ recommendations: string[] }>}
- */
-export async function getRecommendations(features) {
-  const response = await fetch(`${BASE_URL}/recommendations`, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify(features),
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || `API error ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * GET /health
- * @returns {Promise<boolean>}
- */
-export async function healthCheck() {
   try {
-    const response = await fetch(`${BASE_URL}/health`);
-    return response.ok;
-  } catch {
-    return false;
+    const res = await fetch(API_BASE + "/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    document.getElementById("result").innerText =
+      `Prediction: ${result.label} | Confidence: ${result.confidence}`;
+
+  } catch (err) {
+    document.getElementById("result").innerText = "Error connecting to API";
+    console.error(err);
   }
-}
+});
+
+// 🔹 Batch Prediction
+document.getElementById("batch-form").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const formData = new FormData(this);
+
+  try {
+    const res = await fetch(API_BASE + "/predict-batch", {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await res.json();
+
+    alert("Batch prediction done!");
+    console.log(result);
+
+  } catch (err) {
+    alert("Batch upload failed");
+  }
+});
