@@ -1,64 +1,73 @@
-# Clean Folder Structure
-
-```text
-AI-Driven-Manufacturing-Quality-Prediction/
+AI-Manufacturing-Quality-Prediction/
 │
-├── README.md                         # Project overview and instructions
+├── README.md                         # Project overview + setup + Docker usage
 ├── PROJECT_STRUCTURE.md              # Folder structure documentation
 ├── requirements.txt                  # Python dependencies
-├── .gitignore                        # Files/folders to ignore in Git
+├── .gitignore                        # Ignore files for Git
+├── pytest.ini                        # Pytest configuration (PYTHONPATH fix)
 │
-├── backend/                          # Backend application (API + ML logic)
+├── Dockerfile                        # Docker image configuration
+├── docker-compose.yml                # Multi-container setup
+│
+├── .github/
+│   └── workflows/
+│       └── test.yml                  # CI/CD pipeline (GitHub Actions)
+│
+├── backend/                          # Backend (Flask + ML)
 │   │
-│   ├── src/                          # Source code
-│   │   │
-│   │   ├── api/                      # API layer (Flask/FastAPI routes)
+│   ├── src/
+│   │   ├── api/
 │   │   │   ├── __init__.py
-│   │   │   ├── main.py               # Entry point for API (routes, endpoints)
-│   │   │   └── schemas.py            # Request/response validation schemas
+│   │   │   ├── main.py               # Flask app (routes + endpoints)
+│   │   │   └── schemas.py            # Request validation schemas
 │   │   │
-│   │   ├── ml/                       # Machine Learning logic
+│   │   ├── ml/
 │   │   │   ├── __init__.py
-│   │   │   ├── config.py             # Model/config parameters
-│   │   │   ├── data_generator.py     # Synthetic data generator (if used)
-│   │   │   ├── preprocessing.py      # Data cleaning & feature engineering
-│   │   │   ├── train_model.py        # Model training script
-│   │   │   └── predictor.py          # Loads model and predicts output
+│   │   │   ├── config.py
+│   │   │   ├── data_generator.py
+│   │   │   ├── preprocessing.py
+│   │   │   ├── train_model.py
+│   │   │   └── predictor.py          # ML prediction logic
 │   │   │
-│   │   ├── defect_prevention/        # Recommendation logic
+│   │   ├── defect_prevention/
 │   │   │   ├── __init__.py
-│   │   │   └── recommender.py        # Suggests preventive actions
+│   │   │   └── recommender.py        # Recommendation system
+│   │   │
+│   │   ├── utils/
+│   │   │   ├── __init__.py
+│   │   │   └── validation.py         # Input validation logic
 │   │   │
 │   │   └── __init__.py
 │   │
-│   ├── models/                       # Trained ML models
-│   │   ├── quality_model.joblib      # Saved trained model
-│   │   └── metrics.json              # Model performance metrics
+│   ├── models/
+│   │   ├── quality_model.joblib      # Trained ML model
+│   │   └── metrics.json              # Model evaluation metrics
 │   │
-│   └── tests/                        # Backend test cases
+│   └── tests/
 │       ├── test_api.py
+│       ├── test_predictor.py
 │       └── test_recommender.py
 │
-├── frontend/                         # Frontend UI (static)
+├── frontend/                         # UI (connected to API)
 │   ├── index.html
 │   ├── styles.css
 │   └── app.js
 │
-├── data/                             # Dataset (NOT used in deployment)
-│   ├── raw/                          # Raw datasets
+├── data/
+│   ├── raw/
 │   │   ├── sample_input.csv
 │   │   └── manufacturing_defects_sample.csv
 │   │
-│   └── processed/                    # Cleaned/processed data
+│   └── processed/
 │       └── .gitkeep
 │
-├── scripts/                          # Utility & automation scripts
-│   ├── download_kaggle_dataset.ps1   # Download dataset from Kaggle
-│   ├── run_dev.ps1                   # Run development server
-│   └── run_tests.ps1                 # Execute test cases
+├── scripts/
+│   ├── download_kaggle_dataset.ps1
+│   ├── run_dev.ps1
+│   └── run_tests.ps1
 │
-├── docs/                             # Documentation
-│   └── architecture.md               # System architecture & flow
+└── docs/
+    └── architecture.md
 
 ## Run Order
 
