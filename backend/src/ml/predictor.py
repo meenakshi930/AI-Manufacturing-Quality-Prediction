@@ -1,81 +1,80 @@
+"""
+Predictor — loads the trained model and exposes predict_one().
+Auto-trains the model on first use if it is missing.
+"""
+
 from __future__ import annotations
 
-from functools import lru_cache
-from typing import Any
+import logging
+from pathlib import Path
+from typing import Dict, Any
 
 import joblib
-import pandas as pd
+import numpy as np
 
-from backend.src.defect_prevention.recommender import (
-    prevention_recommendations,
-    risk_level,
-)
-from backend.src.ml.config import MODEL_PATH
-from backend.src.ml.preprocessing import payload_to_frame
+logger = logging.getLogger(__name__)
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+_HERE      = Path(__file__).resolve().parent        # backend/src/ml/
+_MODEL_PATH = _HERE.parents[1] / "models" / "quality_model.joblib"
+
+# Cached pipeline (loaded once per process)
+_pipeline = None
 
 
-# -------------------------------
-# Load Model (cached)
-# -------------------------------
-@lru_cache(maxsize=1)
-def load_model():
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(
-            "Trained model not found. Run `python -m backend.src.ml.train_model` first."
+def _get_pipeline():
+    """Return (and cache) the trained pipeline, auto-training if needed."""
+    global _pipeline
+    if _pipeline is not None:
+        return _pipeline
+
+    if not _MODEL_PATH.exists():
+        logger.warning(
+            "Model file not found at %s — auto-training now …", _MODEL_PATH
         )
-    return joblib.load(MODEL_PATH)
+        # Lazy import to avoid circular deps
+        from src.ml.train_model import train_and_save
+        train_and_save()
+
+    _pipeline = joblib.load(_MODEL_PATH)
+    logger.info("Model loaded from %s", _MODEL_PATH)
+    return _pipeline
 
 
-# -------------------------------
-# Single Prediction
-# -------------------------------
-def predict_one(payload: dict[str, Any]) -> dict[str, Any]:
-    frame = payload_to_frame(payload)
-    model = load_model()
+def predict_one(features: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Run inference for a single sample.
 
-    probability = float(model.predict_proba(frame)[0][1])
-    prediction = int(probability >= 0.5)
+    Args:
+        features: dict with keys matching the training feature order.
+                  Expected keys (in order):
+                    temperature, pressure, humidity, vibration_level
 
-    input_record = frame.iloc[0].to_dict()
+    Returns:
+        {
+            "prediction": 0 | 1,
+            "confidence": float,   # probability of the predicted class
+            "label":      str,     # "Pass" | "Defect"
+        }
+
+    Raises:
+        ValueError: if required feature keys are missing.
+    """
+    FEATURE_ORDER = ["temperature", "pressure", "humidity", "vibration_level"]
+
+    missing = [k for k in FEATURE_ORDER if k not in features]
+    if missing:
+        raise ValueError(f"Missing required feature(s): {missing}")
+
+    X = np.array([[features[k] for k in FEATURE_ORDER]], dtype=float)
+
+    pipeline  = _get_pipeline()
+    pred      = int(pipeline.predict(X)[0])
+    proba     = pipeline.predict_proba(X)[0]
+    confidence = float(proba[pred])
 
     return {
-        "defect_prediction": prediction,
-        "defect_label": "Defective" if prediction else "Good",
-        "defect_probability": round(probability, 4),
-        "risk_level": risk_level(probability),
-        "recommendations": prevention_recommendations(input_record, probability),
+        "prediction": pred,
+        "confidence": round(confidence, 4),
+        "label":      "Defect" if pred == 1 else "Pass",
     }
-
-
-# -------------------------------
-# Batch Prediction
-# -------------------------------
-def predict_batch(frame: pd.DataFrame) -> pd.DataFrame:
-    results = []
-
-    for _, row in frame.iterrows():
-        record = row.to_dict()
-
-        try:
-            prediction = predict_one(record)
-
-            result_row = {
-                **record,
-                **prediction,
-                "error": None,
-            }
-
-        except Exception as e:
-            result_row = {
-                **record,
-                "defect_prediction": None,
-                "defect_label": None,
-                "defect_probability": None,
-                "risk_level": None,
-                "recommendations": None,
-                "error": str(e),
-            }
-
-        results.append(result_row)
-
-    return pd.DataFrame(results)
