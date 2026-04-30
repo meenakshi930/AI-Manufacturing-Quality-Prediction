@@ -12,24 +12,24 @@
 
 <form id="prediction-form">
 
-  <input name="temperature" type="number" placeholder="Temperature" required /><br>
-  <input name="pressure" type="number" placeholder="Pressure" required /><br>
-  <input name="humidity" type="number" placeholder="Humidity" required /><br>
-  <input name="vibration_level" type="number" placeholder="Vibration Level" required /><br>
+  <input name="temperature" type="number" step="any" placeholder="Temperature" required /><br>
+  <input name="pressure" type="number" step="any" placeholder="Pressure" required /><br>
+  <input name="humidity" type="number" step="any" placeholder="Humidity" required /><br>
+  <input name="vibration_level" type="number" step="any" placeholder="Vibration Level" required /><br>
 
-  <!-- Dummy values for remaining features (adjust if needed) -->
-  <input name="feature5" type="number" value="10" required hidden />
-  <input name="feature6" type="number" value="20" required hidden />
-  <input name="feature7" type="number" value="30" required hidden />
-  <input name="feature8" type="number" value="40" required hidden />
-  <input name="feature9" type="number" value="50" required hidden />
-  <input name="feature10" type="number" value="60" required hidden />
-  <input name="feature11" type="number" value="70" required hidden />
-  <input name="feature12" type="number" value="80" required hidden />
-  <input name="feature13" type="number" value="90" required hidden />
-  <input name="feature14" type="number" value="100" required hidden />
-  <input name="feature15" type="number" value="110" required hidden />
-  <input name="feature16" type="number" value="120" required hidden />
+  <!-- Remaining features (dummy values) -->
+  <input name="feature5" type="number" value="10" hidden />
+  <input name="feature6" type="number" value="20" hidden />
+  <input name="feature7" type="number" value="30" hidden />
+  <input name="feature8" type="number" value="40" hidden />
+  <input name="feature9" type="number" value="50" hidden />
+  <input name="feature10" type="number" value="60" hidden />
+  <input name="feature11" type="number" value="70" hidden />
+  <input name="feature12" type="number" value="80" hidden />
+  <input name="feature13" type="number" value="90" hidden />
+  <input name="feature14" type="number" value="100" hidden />
+  <input name="feature15" type="number" value="110" hidden />
+  <input name="feature16" type="number" value="120" hidden />
 
   <button type="submit">Predict</button>
 </form>
@@ -96,7 +96,6 @@ document.getElementById("batch-form").addEventListener("submit", async function(
     const result = await res.json();
 
     alert("Batch prediction completed! Check console.");
-
     console.log(result);
 
   } catch (err) {
