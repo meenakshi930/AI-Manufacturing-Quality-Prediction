@@ -22,25 +22,27 @@ body {
 
   padding: 20px;
   border-radius: 12px;
-  margin-bottom: 20px;
-
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  margin-bottom: 15px;
 }
 
-.header-left h1 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.header-left p {
-  margin: 5px 0 0;
-  font-size: 14px;
+.header-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .status {
   background: rgba(255,255,255,0.2);
   padding: 6px 12px;
   border-radius: 20px;
+}
+
+/* STATUS CARD */
+.status-card {
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
 }
 
 /* Layout */
@@ -55,7 +57,6 @@ body {
   background: white;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
 /* Inputs */
@@ -69,17 +70,12 @@ input {
 
 /* Button */
 button {
-  width: 100%;
-  padding: 10px;
+  padding: 8px 12px;
   background: #2563eb;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-}
-
-button:hover {
-  background: #1d4ed8;
 }
 
 /* Result */
@@ -89,17 +85,9 @@ button:hover {
   border-radius: 10px;
 }
 
-#risk-badge {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  color: white;
-}
-
-.low { background: #16a34a; }
-.medium { background: #f59e0b; }
-.high { background: #dc2626; }
+.low { background: #16a34a; color:white; padding:5px 10px; border-radius:20px;}
+.medium { background: #f59e0b; color:white; padding:5px 10px; border-radius:20px;}
+.high { background: #dc2626; color:white; padding:5px 10px; border-radius:20px;}
 
 /* Progress */
 .progress {
@@ -115,6 +103,13 @@ button:hover {
   background: #2563eb;
 }
 
+/* Explanation */
+#explanation {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #374151;
+}
+
 /* Charts */
 canvas {
   width: 100% !important;
@@ -123,4 +118,17 @@ canvas {
   background: white;
   padding: 10px;
   border-radius: 10px;
+}
+
+/* DARK MODE */
+.dark {
+  background: #111827;
+  color: white;
+}
+
+.dark .left-panel,
+.dark .right-panel,
+.dark .status-card,
+.dark canvas {
+  background: #1f2937;
 }
