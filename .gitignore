@@ -10,3 +10,4 @@ data/processed/*.csv
 *.log
 dist/
 .env
+backend/models/*.joblib
