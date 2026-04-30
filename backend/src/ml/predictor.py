@@ -1,6 +1,6 @@
 """
 ML prediction logic.
-Loads the trained pipeline from backend/models/quality_model.joblib.
+Loads the trained pipeline from backend/models/model.pkl.
 Auto-trains on first use if the file is missing.
 """
 
@@ -12,97 +12,93 @@ from typing import Any, Dict
 
 import joblib
 import numpy as np
+import pandas as pd
+
+from backend.src.ml.config import FEATURE_COLUMNS
 
 logger = logging.getLogger(__name__)
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-# __file__ = backend/src/ml/predictor.py
-# .parents[2] = backend/
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
-_MODEL_PATH  = _BACKEND_DIR / "models" / "quality_model.joblib"
+_MODEL_PATH = _BACKEND_DIR / "models" / "model.pkl"
 
-# Feature order must match what was used during training
-FEATURE_ORDER = ["temperature", "pressure", "humidity", "vibration_level"]
+# ✅ Use correct feature order from config
+FEATURE_ORDER = FEATURE_COLUMNS
 
-# Module-level cache — loaded once per process
+# Module-level cache
 _pipeline = None
 
 
+# ──────────────────────────────────────────────────────────────────────────────
 def _get_pipeline():
-    """Return the cached pipeline, auto-training if the model file is missing."""
+    """Load model (auto-train if missing)."""
     global _pipeline
+
     if _pipeline is not None:
         return _pipeline
 
     if not _MODEL_PATH.exists():
-        logger.warning("Model not found at %s — auto-training now …", _MODEL_PATH)
+        logger.warning("Model not found — training new model...")
         from backend.src.ml.train_model import train_and_save
         train_and_save()
 
     _pipeline = joblib.load(_MODEL_PATH)
-    logger.info("Model loaded from %s", _MODEL_PATH)
+    logger.info("Model loaded successfully")
+
     return _pipeline
 
 
+# ──────────────────────────────────────────────────────────────────────────────
 def predict_one(features: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Run inference for a single sample.
-
-    Args:
-        features: dict with keys matching FEATURE_ORDER:
-                  temperature, pressure, humidity, vibration_level
-
-    Returns:
-        {
-            "prediction": 0 | 1,
-            "confidence": float,   # probability of the predicted class
-            "label":      str,     # "Pass" | "Defect"
-        }
-
-    Raises:
-        ValueError: if required feature keys are missing.
+    Predict a single record.
     """
+
+    # Validate features
     missing = [k for k in FEATURE_ORDER if k not in features]
     if missing:
         raise ValueError(f"Missing required feature(s): {missing}")
 
-    X         = np.array([[features[k] for k in FEATURE_ORDER]], dtype=float)
-    pipeline  = _get_pipeline()
-    pred      = int(pipeline.predict(X)[0])
-    proba     = pipeline.predict_proba(X)[0]
+    # Convert to array
+    X = np.array([[features[k] for k in FEATURE_ORDER]], dtype=float)
+
+    pipeline = _get_pipeline()
+
+    pred = int(pipeline.predict(X)[0])
+    proba = pipeline.predict_proba(X)[0]
     confidence = float(proba[pred])
 
     return {
         "prediction": pred,
         "confidence": round(confidence, 4),
-        "label":      "Defect" if pred == 1 else "Pass",
+        "label": "Defect" if pred == 1 else "Pass",
     }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 def predict_batch(frame: pd.DataFrame) -> pd.DataFrame:
-    results = []
+    """
+    Predict multiple rows.
+    """
 
-    for _, row in frame.iterrows():
-        record = row.to_dict()
+    # Validate columns
+    missing_cols = [c for c in FEATURE_ORDER if c not in frame.columns]
+    if missing_cols:
+        raise ValueError(f"Missing columns in input: {missing_cols}")
 
-        try:
-            prediction = predict_one(record)
+    pipeline = _get_pipeline()
 
-            result_row = {
-                **record,
-                **prediction,
-                "error": None,
-            }
+    X = frame[FEATURE_ORDER].values
 
-        except Exception as e:
-            result_row = {
-                **record,
-                "defect_prediction": None,
-                "defect_label": None,
-                "defect_probability": None,
-                "risk_level": None,
-                "recommendations": None,
-                "error": str(e),
-            }
+    preds = pipeline.predict(X)
+    probas = pipeline.predict_proba(X)
 
-        results.append(result_row)
+    results = frame.copy()
 
-    return pd.DataFrame(results)
+    results["prediction"] = preds
+    results["confidence"] = [
+        round(float(probas[i][preds[i]]), 4) for i in range(len(preds))
+    ]
+    results["label"] = ["Defect" if p == 1 else "Pass" for p in preds]
+
+    return results
