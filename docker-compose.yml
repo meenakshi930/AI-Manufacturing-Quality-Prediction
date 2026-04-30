@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: quality-prediction
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000

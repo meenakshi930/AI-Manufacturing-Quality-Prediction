@@ -5,13 +5,20 @@ from pathlib import Path
 import os
 
 import pandas as pd
-from flask import Flask, Response, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory, Response
 from flask_cors import CORS
 
-from src.ml.predictor import predict_batch, predict_one
+# 🔥 ML logic
+from src.ml.predictor import predict_one, predict_batch
 
+# 🔥 validation
+from src.utils.validation import validate_payload, ValidationError
+
+
+# 📁 Paths
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
+DATA_DIR = PROJECT_ROOT / "data" / "raw"
 
 
 def create_app() -> Flask:
@@ -22,77 +29,114 @@ def create_app() -> Flask:
         static_url_path="/static",
     )
 
-    # ✅ Enable CORS (important for frontend apps)
+    # ✅ Enable CORS
     CORS(app)
 
+    # -------------------------------
+    # 🔹 ROUTES
+    # -------------------------------
+
     @app.get("/")
-    def dashboard() -> str:
+    def home():
         return render_template("index.html")
 
     @app.get("/health")
-    def health() -> tuple[Response, int]:
-        return jsonify({"status": "ok", "service": "manufacturing-quality-platform"}), 200
+    def health():
+        return jsonify({
+            "status": "ok",
+            "service": "manufacturing-quality-prediction"
+        }), 200
 
     @app.get("/sample-data")
     def sample_data():
-        data_path = PROJECT_ROOT / "data" / "raw" / "sample_input.csv"
+        file_path = DATA_DIR / "sample_input.csv"
 
-        if not data_path.exists():
+        if not file_path.exists():
             return jsonify({"detail": "Sample data not found"}), 404
 
-        return send_from_directory(data_path.parent, data_path.name, as_attachment=True)
+        return send_from_directory(file_path.parent, file_path.name, as_attachment=True)
 
+    # -------------------------------
+    # 🔥 SINGLE PREDICTION
+    # -------------------------------
     @app.post("/predict")
-    def predict() -> tuple[Response, int]:
+    def predict():
         payload = request.get_json(silent=True)
 
-        if not isinstance(payload, dict):
-            return jsonify({"detail": "Request body must be a JSON object."}), 400
+        # 🔥 FIX 1: handle empty JSON
+        if not payload:
+            return jsonify({"detail": "Empty request body"}), 400
 
         try:
-            return jsonify(predict_one(payload)), 200
-        except FileNotFoundError as exc:
-            return jsonify({"detail": str(exc)}), 503
-        except ValueError as exc:
-            return jsonify({"detail": str(exc)}), 400
-        except Exception as exc:
-            return jsonify({"detail": f"Unexpected error: {str(exc)}"}), 500
+            # 🔥 validation
+            clean_data = validate_payload(payload)
 
+            # 🔥 prediction
+            result = predict_one(clean_data)
+
+            return jsonify(result), 200
+
+        except ValidationError as e:
+            return jsonify({"detail": str(e)}), 400
+
+        except FileNotFoundError as e:
+            return jsonify({"detail": str(e)}), 503
+
+        except ValueError as e:
+            return jsonify({"detail": str(e)}), 400
+
+        except Exception as e:
+            return jsonify({"detail": f"Unexpected error: {str(e)}"}), 500
+
+    # -------------------------------
+    # 📊 BATCH PREDICTION
+    # -------------------------------
     @app.post("/predict/batch")
-    def predict_batch_csv() -> tuple[Response, int] | Response:
-        uploaded = request.files.get("file")
+    def predict_batch_csv():
+        file = request.files.get("file")
 
-        if uploaded is None or not uploaded.filename.lower().endswith(".csv"):
-            return jsonify({"detail": "Upload a CSV file."}), 400
+        if not file or not file.filename.lower().endswith(".csv"):
+            return jsonify({"detail": "Please upload a valid CSV file"}), 400
 
         try:
-            # ✅ Improved CSV reading (handles encoding issues gracefully)
-            frame = pd.read_csv(uploaded, encoding="utf-8", errors="replace")
+            # 🔥 FIX 2: safer CSV reading
+            df = pd.read_csv(file, encoding="utf-8", errors="replace")
 
-            result = predict_batch(frame)
+            result_df = predict_batch(df)
 
-        except FileNotFoundError as exc:
-            return jsonify({"detail": str(exc)}), 503
-        except ValueError as exc:
-            return jsonify({"detail": str(exc)}), 400
-        except Exception as exc:
-            return jsonify({"detail": f"Failed to process CSV: {str(exc)}"}), 400
+            output = StringIO()
+            result_df.to_csv(output, index=False)
 
-        output = StringIO()
-        result.to_csv(output, index=False)
+            return Response(
+                output.getvalue(),
+                mimetype="text/csv",
+                headers={
+                    "Content-Disposition": "attachment; filename=predictions.csv"
+                }
+            )
 
-        return Response(
-            output.getvalue(),
-            mimetype="text/csv",
-            headers={
-                "Content-Disposition": "attachment; filename=quality_predictions.csv"
-            },
-        )
+        except FileNotFoundError as e:
+            return jsonify({"detail": str(e)}), 503
+
+        except ValueError as e:
+            return jsonify({"detail": str(e)}), 400
+
+        except Exception as e:
+            return jsonify({"detail": f"Batch processing failed: {str(e)}"}), 500
 
     return app
 
 
+# 🔥 Create app
 app = create_app()
 
+
+# -------------------------------
+# 🚀 RUN SERVER
+# -------------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(
+        host="0.0.0.0",   # ✅ required for Docker
+        port=int(os.environ.get("PORT", 5000)),
+        debug=True
+    )
