@@ -2,59 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>AI Manufacturing Quality</title>
+  <title>AI Manufacturing Dashboard</title>
+
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
 <div class="container">
-  <h1>AI Quality Prediction System</h1>
-  <p class="subtitle">Predict defects & prevent failures proactively</p>
 
-  <form id="prediction-form">
-    <input name="temperature" type="number" step="any" placeholder="Temperature" required>
-    <input name="pressure" type="number" step="any" placeholder="Pressure" required>
-    <input name="humidity" type="number" step="any" placeholder="Humidity" required>
-    <input name="vibration_level" type="number" step="any" placeholder="Vibration Level" required>
+  <h1>🏭 Smart Manufacturing AI</h1>
+  <p class="subtitle">Predict defects before failure</p>
 
-    <!-- Hidden features -->
-    <input name="feature5" value="10" hidden>
-    <input name="feature6" value="20" hidden>
-    <input name="feature7" value="30" hidden>
-    <input name="feature8" value="40" hidden>
-    <input name="feature9" value="50" hidden>
-    <input name="feature10" value="60" hidden>
-    <input name="feature11" value="70" hidden>
-    <input name="feature12" value="80" hidden>
-    <input name="feature13" value="90" hidden>
-    <input name="feature14" value="100" hidden>
-    <input name="feature15" value="110" hidden>
-    <input name="feature16" value="120" hidden>
+  <!-- INPUT + RESULT -->
+  <div class="main">
 
-    <button type="submit">Predict Quality</button>
-  </form>
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <h3>Input Parameters</h3>
 
-  <!-- RESULT SECTION -->
-  <div id="result-box">
-    <h3 id="prediction-text">Result will appear here</h3>
-    <div id="risk-badge"></div>
+      <form id="prediction-form">
+        <input name="temperature" type="number" value="55" placeholder="Temperature" required>
+        <input name="pressure" type="number" value="210" placeholder="Pressure" required>
+        <input name="humidity" type="number" value="0.6" placeholder="Humidity" required>
+        <input name="vibration_level" type="number" value="105" placeholder="Vibration Level" required>
 
-    <div class="progress">
-      <div id="confidence-bar"></div>
+        <!-- Hidden features -->
+        <input name="feature5" value="10" hidden>
+        <input name="feature6" value="20" hidden>
+        <input name="feature7" value="30" hidden>
+        <input name="feature8" value="40" hidden>
+        <input name="feature9" value="50" hidden>
+        <input name="feature10" value="60" hidden>
+        <input name="feature11" value="70" hidden>
+        <input name="feature12" value="80" hidden>
+        <input name="feature13" value="90" hidden>
+        <input name="feature14" value="100" hidden>
+        <input name="feature15" value="110" hidden>
+        <input name="feature16" value="120" hidden>
+
+        <button type="submit">Predict</button>
+      </form>
+
+      <p id="loader" style="display:none;">⏳ Predicting...</p>
     </div>
 
-    <div id="recommendations"></div>
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <h3>Prediction Result</h3>
+
+      <div class="result-card">
+        <h2 id="prediction-text">--</h2>
+        <span id="risk-badge"></span>
+      </div>
+
+      <div class="progress">
+        <div id="confidence-bar"></div>
+      </div>
+
+      <div id="insight-box"></div>
+      <p id="timestamp"></p>
+    </div>
+
   </div>
 
-  <!-- BATCH -->
-  <div class="batch">
-    <h3>Batch Prediction</h3>
-    <form id="batch-form">
-      <input type="file" name="file" accept=".csv" required>
-      <button type="submit">Upload CSV</button>
-    </form>
-  </div>
+  <!-- GRAPHS -->
+  <h3>📊 Feature Analysis</h3>
+  <canvas id="featureChart"></canvas>
+
+  <h3>📈 Confidence Trend</h3>
+  <canvas id="historyChart"></canvas>
+
 </div>
 
 <script src="app.js"></script>
