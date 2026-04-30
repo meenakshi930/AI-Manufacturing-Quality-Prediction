@@ -14,6 +14,14 @@ from pathlib import Path
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+import logging
+
+app = Flask(__name__)
+CORS(app)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # 🔥 ML logic
 from backend.src.ml.predictor import predict_one, predict_batch
 
