@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import json
@@ -7,7 +6,12 @@ import pandas as pd
 
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    roc_auc_score,
+    confusion_matrix,
+)
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -115,12 +119,19 @@ def train() -> dict:
     predictions = model.predict(x_test)
     probabilities = model.predict_proba(x_test)[:, 1]
 
+    # Confusion Matrix
+    cm = confusion_matrix(y_test, predictions)
+
+    # Structured Classification Report
+    report_dict = classification_report(y_test, predictions, output_dict=True)
+
     metrics = {
         "accuracy": round(float(accuracy_score(y_test, predictions)), 4),
         "roc_auc": round(float(roc_auc_score(y_test, probabilities)), 4),
         "cv_score": round(float(cv_score), 4),
         "best_params": grid.best_params_,
-        "report": classification_report(y_test, predictions),
+        "confusion_matrix": cm.tolist(),
+        "classification_report": report_dict,
     }
 
     # -------------------------------
