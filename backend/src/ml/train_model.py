@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import json
@@ -11,7 +12,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_sc
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.ml.config import (
+from backend.src.ml.config import (
     FEATURE_COLUMNS,
     MODEL_DIR,
     MODEL_PATH,
@@ -20,8 +21,8 @@ from src.ml.config import (
     SAMPLE_DATASET_PATH,
     TARGET_COLUMN,
 )
-from src.ml.data_generator import save_sample_dataset
-from src.ml.preprocessing import validate_input_frame
+from backend.src.ml.data_generator import save_sample_dataset
+from backend.src.ml.preprocessing import validate_input_frame
 
 
 # -------------------------------
@@ -67,7 +68,7 @@ def build_pipeline() -> Pipeline:
 # -------------------------------
 # Train Model
 # -------------------------------
-def train() -> dict[str, float | str | dict]:
+def train() -> dict:
     data = load_training_data()
 
     features = validate_input_frame(data[FEATURE_COLUMNS])
@@ -89,7 +90,7 @@ def train() -> dict[str, float | str | dict]:
     param_grid = {
         "classifier__n_estimators": [100, 200],
         "classifier__max_depth": [8, 10, None],
-        "classifier__min_samples_leaf": [2, 4]
+        "classifier__min_samples_leaf": [2, 4],
     }
 
     grid = GridSearchCV(
