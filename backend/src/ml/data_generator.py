@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from src.ml.config import SAMPLE_DATASET_PATH
+from backend.src.ml.config import SAMPLE_DATASET_PATH
 
 
 def generate_manufacturing_defects_data(rows: int = 1200, seed: int = 42) -> pd.DataFrame:
