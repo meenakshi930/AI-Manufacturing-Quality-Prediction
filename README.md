@@ -7,20 +7,26 @@
 ![CI](https://img.shields.io/badge/CI-GitHub_Actions-purple?style=flat-square)
 ![Accuracy](https://img.shields.io/badge/Accuracy-87.08%25-success?style=flat-square)
 
-> Predicts manufacturing defect risk **before products leave the production line** — combining a Flask backend, Random Forest ML model, rule-based recommendations, batch processing, and a supervisor dashboard.
+> Predict manufacturing defect risk **before products leave the production line** using Machine Learning + rule-based intelligence.
+> 🚀 End-to-end ML system: data → model → API → deployment
+
+## 🚀 Live Deployment
+
+[![Frontend - Vercel](https://img.shields.io/badge/Frontend-Vercel-black?style=for-the-badge\&logo=vercel)](https://ai-manufacturing-quality-prediction.vercel.app/)
+[![Backend - Render](https://img.shields.io/badge/Backend-Render-blue?style=for-the-badge\&logo=render)](https://ai-manufacturing-quality-prediction.onrender.com)
 
 ---
 
 ## ✨ Features
 
-| Feature | Description |
-|---|---|
-| 🔍 Defect risk prediction | Low / Medium / High with probability score |
+| Feature                       | Description                                     |
+| ----------------------------- | ----------------------------------------------- |
+| 🔍 Defect risk prediction     | Low / Medium / High with probability score      |
 | 💡 Preventive recommendations | Rule-based actions for risky process conditions |
-| 📂 Batch CSV prediction | Upload a file, get predictions for every row |
-| 🖥️ Supervisor dashboard | Browser UI — no ML expertise required |
-| ✅ Input validation | Descriptive HTTP 422 error responses |
-| ⚙️ CI/CD pipeline | pytest runs on every push via GitHub Actions |
+| 📂 Batch CSV prediction       | Upload a file, get predictions for every row    |
+| 🖥️ Supervisor dashboard      | Browser UI — no ML expertise required           |
+| ✅ Input validation            | Descriptive HTTP 422 error responses            |
+| ⚙️ CI/CD pipeline             | pytest runs on every push via GitHub Actions    |
 
 ---
 
@@ -32,13 +38,13 @@
 
 ## 🌐 API Endpoints
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Dashboard UI |
-| `GET` | `/health` | Health check |
-| `GET` | `/sample-data` | Download sample CSV |
-| `POST` | `/predict` | Single-record prediction |
-| `POST` | `/predict/batch` | Batch CSV prediction |
+| Method | Endpoint         | Description              |
+| ------ | ---------------- | ------------------------ |
+| `GET`  | `/`              | Dashboard UI             |
+| `GET`  | `/health`        | Health check             |
+| `GET`  | `/sample-data`   | Download sample CSV      |
+| `POST` | `/predict`       | Single-record prediction |
+| `POST` | `/predict/batch` | Batch CSV prediction     |
 
 ---
 
@@ -60,6 +66,7 @@ flask --app src.api.main run --debug
 ```
 
 🐳 **Docker (recommended)**
+
 ```bash
 docker compose up --build
 ```
@@ -70,17 +77,17 @@ Open **http://localhost:5000**
 
 ## 📌 Future Improvements
 
-- Authentication & authorization
-- Database integration (PostgreSQL)
-- Model drift monitoring & scheduled retraining
-- Real-time PLC/SCADA factory data integration
-- Alerting for high-risk batches (Slack, email)
+* Authentication & authorization
+* Database integration (PostgreSQL)
+* Model drift monitoring & scheduled retraining
+* Real-time PLC/SCADA factory data integration
+* Alerting for high-risk batches (Slack, email)
 
 ---
 
 ## 👩‍💻 Contributors
 
-| | Name | Responsibilities |
-|---|---|---|
-| 🔵 | **Meenakshi Gupta** | Backend, ML, API, Docker, CI/CD |
-| 🟢 | **Anshika Garg** | Frontend, UI Design, Integration |
+|    | Name                | Responsibilities                 |
+| -- | ------------------- | -------------------------------- |
+| 🔵 | **Meenakshi Gupta** | Backend, ML, API, Docker, CI/CD  |
+| 🟢 | **Anshika Garg**    | Frontend, UI Design, Integration |
